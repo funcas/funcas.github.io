@@ -496,7 +496,7 @@
 <script>
 NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine/dist/Valine.min.js', () => {
   var GUEST = ['nick', 'mail', 'link'];
-  var guest = 'nick,mail,link';
+  var guest = 'nick,mail';
   guest = guest.split(',').filter(item => {
     return GUEST.includes(item);
   });
@@ -506,12 +506,12 @@ NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine/dist/Valine.min.js', () => {
     notify: false,
     appId: 'brfXUyPtevWzNxHVFTd1Ig5i-9Nh9j0Va',
     appKey: 'LfGhuxD7dxTdWLukqWDBHmYc',
-    placeholder: 'Just go go',
+    placeholder: '评论区',
     avatar: 'mm',
     meta: guest,
     pageSize: '10' || 10,
     visitor: false,
-    lang: 'zh-CN' || 'zh-cn',
+    lang: 'zh-cn' || 'zh-cn',
     path: location.pathname
   });
 }, window.Valine);
