@@ -66,7 +66,7 @@
 <meta property="og:image" content="https://funcas.github.io/2020/04/18/post/media/15871994382568.jpg">
 <meta property="og:image" content="https://funcas.github.io/2020/04/18/post/media/15871998713082.jpg">
 <meta property="og:image" content="https://funcas.github.io/2020/04/18/post/media/moving.gif">
-<meta property="og:updated_time" content="2020-04-18T14:00:18.377Z">
+<meta property="og:updated_time" content="2020-04-19T02:42:45.339Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="盛最多水的容器题解记录">
 <meta name="twitter:description" content="题目给你 n 个非负整数 a1，a2，...，an，每个数代表坐标中的一个点 (i, ai) 。在坐标内画 n 条垂直线，垂直线 i 的两个端点分别为 (i, ai) 和 (i, 0)。找出其中的两条线，使得它们与 x 轴共同构成的容器可以容纳最多的水。说明：你不能倾斜容器，且 n 的值至少为 2。示例：">
@@ -248,11 +248,19 @@
                 
               
 
-              <time title="创建时间：2020-04-18 19:53:44 / 修改时间：22:00:18" itemprop="dateCreated datePublished" datetime="2020-04-18T19:53:44+08:00">2020-04-18</time>
+              <time title="创建时间：2020-04-18 19:53:44" itemprop="dateCreated datePublished" datetime="2020-04-18T19:53:44+08:00">2020-04-18</time>
             </span>
           
             
 
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-04-19 10:42:45" itemprop="dateModified" datetime="2020-04-19T10:42:45+08:00">2020-04-19</time>
+              </span>
             
           
             <span class="post-meta-item">
@@ -290,14 +298,21 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">来源：力扣（LeetCode）</span><br><span class="line">链接：https://leetcode-cn.com/problems/container-with-most-water</span><br><span class="line">著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</span><br></pre></td></tr></table></figure>
 <h2 id="解法一暴力穷举">解法一：暴力穷举</h2>
 <p>这应该是短时间内最容易被想出来的方法了，类似冒泡排序，从头到尾两两做组合，并计算组合出来的面积大小，保留最大值，遍历结束即为结果。</p>
-<p>计算面积的方法，从题目中不难观察出来，底为两柱间距，高以短板为准，所以得出以下求面积的计算逻辑： &gt; min(height[i], height[j]) * (j - i)</p>
+<p>计算面积的方法，从题目中不难观察出来，底为两柱间距，高以短板为准，所以得出以下求面积的计算逻辑：</p>
+<blockquote>
+<p>min(height[i], height[j]) * (j - i)</p>
+</blockquote>
 <p>上代码(go语言描述） <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">maxArea</span><span class="params">(height []<span class="keyword">int</span>)</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	maxArea := <span class="number">0</span></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span> ; i &lt; <span class="built_in">len</span>(height); i++ &#123;</span><br><span class="line">		<span class="keyword">for</span> j: = i+<span class="number">1</span>; j &lt; <span class="built_in">len</span>(height); j++ &#123;</span><br><span class="line">			h := min(height[i], height[j])</span><br><span class="line">			area := h * (j - i)</span><br><span class="line">			maxArea = max(maxArea, area)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> maxArea</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>逻辑简单易懂就不多做解释，时间复杂度嘛：O($ n^{2} $），遇上数据量大的话，超时是必然了，虽然亲测LeetCode的测试点并不会超时，大概在500ms左右的样子。</p>
 <h2 id="解法二-双指针法">解法二 双指针法</h2>
-<p>一般情况下，如果事先没玩过类似的题目，基本上是不容易在短时间内想出这种比较高效的做法的。 双指针法的思路大概是这样的，定义头尾两个指针，比较两个指针所指向的柱高，柱短的那个指针如果是左指针就向前移动一位，如果是右指针就向后移动一位，直到左指针位置大于右指针的位置，结束循环。 初始状态如下图，假定：绿色表头指针，红色表尾指针： <img src="/2020/04/18/post/media/15871991956954.jpg"></p>
+<p>考虑一下如果我们大脑在思考这个问题求解的时候是怎么处理的，直觉上会直接淘汰掉那些距离很近、高度差别过大的组合。这也是人脑的优势所在，不需要计算出精确数据就能做相对精确的比较，剩下的差别不太大，肉眼不容易分辨的再做计算，挑出最大的。于是，我们是不是考虑让程序来完成这种相应的操作呢。我们把思考这个过程做下抽像，其实我们在这个过程中寻找的需要符合这样的情况：<strong>两柱间距离尽量大，两柱高度相关不太大的，这样围出来的面积就是接近于最大的存在</strong>。</p>
+<p>双指针法的思路大概是这样的，定义头尾两个指针，比较两个指针所指向的柱高，柱短的那个指针如果是左指针就向前移动一位，如果是右指针就向后移动一位，直到左指针位置大于右指针的位置，结束循环。 初始状态如下图，假定：绿色表头指针，红色表尾指针： <img src="/2020/04/18/post/media/15871991956954.jpg"></p>
 <p>那么此时头尾指针间的面积为： &gt; maxArea = mix(1, 7) * (8 - 0) = 1 * 8 = 8</p>
 <p>拉下来可以有两种移动方法，移动柱高的指针或移动柱矮的指针，我们假设移动柱高的那个指针，即图中的尾指针（红色） <img src="/2020/04/18/post/media/15871994382568.jpg"></p>
-<p>这时候的面积为： &gt; maxArea = mix(1, 3) * (7 - 0) = 1 * 7 = 7</p>
+<p>这时候的面积为：</p>
+<blockquote>
+<p>maxArea = mix(1, 3) * (7 - 0) = 1 * 7 = 7</p>
+</blockquote>
 <p>发现什么规律了没？在移动的过程中，底是以1为步长依次递减，而高则是以短板为准，也就是说，柱高决定了整块容器面积，所以移动柱高的那个指针时，柱高度并不参与到计算过程中，所以面积会越来越小，而永远不会超过第一次的状态下的这个面积了，于是这部分的组合可以直接过滤掉。所以我们在移动的过程中，应该要移动的是柱矮的那个指针，即现在的头指针（绿色） 第一次移动后如下图： <img src="/2020/04/18/post/media/15871998713082.jpg"></p>
 <p>完整的过程如下gif所示： <img src="/2020/04/18/post/media/moving.gif" alt="moving"></p>
 <p>我们再来看下代码实现（go语言描述） <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">maxArea2</span><span class="params">(height []<span class="keyword">int</span>)</span> <span class="title">int</span></span>&#123;</span><br><span class="line">	length := <span class="built_in">len</span>(height) - <span class="number">1</span></span><br><span class="line">	<span class="comment">// 初始状态下面积</span></span><br><span class="line">	maxArea := min(height[<span class="number">0</span>], height[length]) * length</span><br><span class="line">	<span class="keyword">for</span> i, j := <span class="number">0</span>, length; i &lt; j; &#123;</span><br><span class="line">	   <span class="comment">// 头指针柱高比较低，移动头指针</span></span><br><span class="line">		<span class="keyword">if</span> height[i] &lt; height[j] &#123;</span><br><span class="line">			i++</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123; <span class="comment">// 尾指针柱高比较低，移动尾指针</span></span><br><span class="line">			j--</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 计算每次面积，存储大的一个</span></span><br><span class="line">		maxArea = max(maxArea, min(height[i], height[j]) * (j - i))</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> maxArea</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
