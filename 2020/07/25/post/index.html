@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="//cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":true},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="数值计算在软件开发过程中可以说是基本操作了，而涉及数值计算的业务往往不是真金白银，就是工程科学，一旦在精度上出现问题，后果可能要比rm -rf要来得致命。 我第一次遇到精度计算问题大概是在2011年，那会在浙江中烟，项目经理正眉飞色舞地给财务处长演示预算管理，这里面有个汇总表，能把所有预算科目下的预算数作展示。然而没过几分钟，财务处长就直接指出来：你这预算数加起来的总额不对啊！于是我们认真地打开电">
+<meta name="keywords" content="Java">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数值计算：你与首富的距离可能就差这“一点”">
+<meta property="og:url" content="https://funcas.github.io/2020/07/25/post/index.html">
+<meta property="og:site_name" content="草堂笔记">
+<meta property="og:description" content="数值计算在软件开发过程中可以说是基本操作了，而涉及数值计算的业务往往不是真金白银，就是工程科学，一旦在精度上出现问题，后果可能要比rm -rf要来得致命。 我第一次遇到精度计算问题大概是在2011年，那会在浙江中烟，项目经理正眉飞色舞地给财务处长演示预算管理，这里面有个汇总表，能把所有预算科目下的预算数作展示。然而没过几分钟，财务处长就直接指出来：你这预算数加起来的总额不对啊！于是我们认真地打开电">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://funcas.github.io/2020/07/25/post/15956471857025.jpg">
+<meta property="og:updated_time" content="2020-07-25T04:47:12.781Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="数值计算：你与首富的距离可能就差这“一点”">
+<meta name="twitter:description" content="数值计算在软件开发过程中可以说是基本操作了，而涉及数值计算的业务往往不是真金白银，就是工程科学，一旦在精度上出现问题，后果可能要比rm -rf要来得致命。 我第一次遇到精度计算问题大概是在2011年，那会在浙江中烟，项目经理正眉飞色舞地给财务处长演示预算管理，这里面有个汇总表，能把所有预算科目下的预算数作展示。然而没过几分钟，财务处长就直接指出来：你这预算数加起来的总额不对啊！于是我们认真地打开电">
+<meta name="twitter:image" content="https://funcas.github.io/2020/07/25/post/15956471857025.jpg">
+  <link rel="canonical" href="https://funcas.github.io/2020/07/25/post/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>数值计算：你与首富的距离可能就差这“一点” | 草堂笔记</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c530a536ce02e21013b5b5170e12af3a";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">草堂笔记</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://funcas.github.io/2020/07/25/post/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Funcas">
+      <meta itemprop="description" content="随缘更新，读书笔记、杂记、感想...">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="草堂笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">数值计算：你与首富的距离可能就差这“一点”
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2020-07-25 12:42:47" itemprop="dateCreated datePublished" datetime="2020-07-25T12:42:47+08:00">2020-07-25</time>
+            </span>
+          
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/07/25/post/#comments" itemprop="discussionUrl"><span class="post-comments-count valine-comment-count" data-xid="/2020/07/25/post/" itemprop="commentCount"></span></a>
+  </span>
+  
+  
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">本文字数：</span>
+              
+              <span>3.4k</span>
+            </span>
+          
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              
+              <span>3 分钟</span>
+            </span>
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>数值计算在软件开发过程中可以说是基本操作了，而涉及数值计算的业务往往不是真金白银，就是工程科学，一旦在精度上出现问题，后果可能要比rm -rf要来得致命。 我第一次遇到精度计算问题大概是在2011年，那会在浙江中烟，项目经理正眉飞色舞地给财务处长演示预算管理，这里面有个汇总表，能把所有预算科目下的预算数作展示。然而没过几分钟，财务处长就直接指出来：你这预算数加起来的总额不对啊！于是我们认真地打开电脑的计算器人肉计算了下，还真是错的。虽然误差不大，就差了个零点几，但对于业务而言，这个显然是不允许的。后来排查代码的时候发现，后端代码对于金额变量，全是用了Double类型！由于事出紧急，就直接在现场撸代码了，把Double统统换成BigDecimal，问题得到解决。</p><a id="more"></a>
+<h2 id="危险的double">危险的double</h2>
+<p>那么，先来考大家一个小学计算题吧：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1.1 - 0.6 = ？</span><br><span class="line">0.6 + 0.3 = ？</span><br></pre></td></tr></table></figure>
+<p>答案很明显是0.5和0.9，这个估计不会有人算错。那么我们来试试用程序来计算一下，会不会得到我们预期的结果呢。我们来看下下面这段简单代码的执行结果：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">double</span> a = <span class="number">1.1</span>d;</span><br><span class="line">    <span class="keyword">double</span> b = <span class="number">0.6</span>d;</span><br><span class="line">    <span class="keyword">double</span> c = <span class="number">0.3</span>d;</span><br><span class="line">    System.out.println(<span class="string">"1.1 - 0.6 = "</span> + (a - b));</span><br><span class="line">    System.out.println(<span class="string">"0.6 + 0.3 = "</span> + (b + c));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对应的执行结果是这样的： <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1.1 - 0.6 = 0.5000000000000001</span><br><span class="line">0.6 + 0.3 = 0.8999999999999999</span><br></pre></td></tr></table></figure></p>
+<p>完了，图灵的棺材板按不住了。计算机连区区小学生的题目都算错，而且不止减法，加法都能算错。也许有同学不服气，觉得这可能是Java的Bug。于是我们来试试用C语言实现同样的逻辑看看结果会是怎么样的：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">double</span> a = <span class="number">1.1</span>;</span><br><span class="line">    <span class="keyword">double</span> b = <span class="number">0.6</span>;</span><br><span class="line">    <span class="keyword">double</span> c = <span class="number">0.3</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"1.1 - 0.6 = %0.16f\n"</span>, a - b);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"0.6 + 0.3 = %0.16f\n"</span>, b + c);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后遗憾的是，执行结果是这样子的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1.1 - 0.6 = 0.5000000000000001</span><br><span class="line">0.6 + 0.3 = 0.8999999999999999</span><br></pre></td></tr></table></figure>
+<p>可以看到与Java的执行结果是一致的。 其实在计算机内部，使用的都是二进制数，所以我们的十进制数在进入运算前是会被转换成二进制数的，于是，1.1会被转成1.0001100110011001100...(1100无限循环)，而0.6则是0.10011001100110011001...(1001无限循环),而CPU寄存器的位数是有限的，所以在运算过程中就出现了精度上的损失。所以对于计算机而言，许多小数无法精确表达，这才是精度丢失的根源。</p>
+<p>有些同学可能会觉得，结果已经非常接近了，不会产生什么影响，特别对于前端页面，可能就一个toFixed(n)解决问题。可是对于金融计算领域，这种微小的误差不断累积，将被不断放大，最终结果就是老板发现，今年帐上无故丢了几十万。</p>
+<h2 id="bigdecimal有时候也不那么靠谱">BigDecimal有时候也不那么靠谱</h2>
+<p>于是在职业生涯中一定会有人教育你，金额计算，请丢弃Double,使用BigDecimal，浮点数精确表达和运算的场景，一定要使用这个类型。然而…… 我们再来看个例子：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">System.out.println(<span class="keyword">new</span> BigDecimal(<span class="number">0.6</span>).add(<span class="keyword">new</span> BigDecimal(<span class="number">0.3</span>)));</span><br><span class="line">System.out.println(<span class="keyword">new</span> BigDecimal(<span class="number">1.1</span>).subtract(<span class="keyword">new</span> BigDecimal(<span class="number">0.6</span>)));</span><br></pre></td></tr></table></figure>
+<p>输出结果是这样的:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">0.899999999999999966693309261245303787291049957275390625</span><br><span class="line">0.50000000000000011102230246251565404236316680908203125</span><br></pre></td></tr></table></figure>
+<p>这……除了精度高了，跟Double是有毛线的区别了，还是不准确啊。所以使用BigDecimal的一个注意点，实例化初始值，不要使用浮点数，而是使用字符串来初始化。为了图省事，实体类上用的浮点，只在计算上使用了BigDecimal，是达不到预期效果的，这是个妥妥的坑点。</p>
+<p>其实在这个过程中，为了省事，我还试过了另外一种方案，可能聪明的小伙伴们已经想到了，用Double.toString()直接转成字符串来初始化不就完事了。确实，这个方案在大部分情况下是很受用的，只是在特定情况下，会引发一些不必要的麻烦，比如下面这个例子： <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">System.out.println(<span class="keyword">new</span> BigDecimal(<span class="string">"3.14159"</span>).multiply(<span class="keyword">new</span> BigDecimal(<span class="number">100</span>)));</span><br><span class="line">System.out.println(<span class="keyword">new</span> BigDecimal(<span class="string">"3.14159"</span>).multiply(<span class="keyword">new</span> BigDecimal(Double.toString(<span class="number">100</span>))));</span><br></pre></td></tr></table></figure></p>
+<p>它的运行结果其实是酱紫的： <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">314.15900</span><br><span class="line">314.159000</span><br></pre></td></tr></table></figure></p>
+<p>我们发现，使用Double.toString()出来的，计算后诡异地多了一位精度！ 其实这个问题是由于BigDecimal乘法时计算scale的方式是将乘数与被乘数的scale相加，而问题就出在，使用字符串实例化出来的scale是0，而使用Double.toString()出来的却是1，于是算出来的两个结果的精度刚好相差1。所以你就不得不为你的计算结果做格式化了。</p>
+<p>第二个BigDecimal的问题是判等。这里说的判等不是指两数是否相等的compareTo()方法，而是equals()方法。这个问题比较小众，大部分童鞋不一定有机会踩到。假设有这么一个场景，我们有个HashSet,然后要把BigDecimal的值丢进去，这时候让Set帮我们去重。但是结果却无法令我们满意。来看下面这个例子：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Set&lt;BigDecimal&gt; hs = <span class="keyword">new</span> HashSet&lt;&gt;();</span><br><span class="line">hs.add(<span class="keyword">new</span> BigDecimal(<span class="string">"2.0"</span>));</span><br><span class="line">hs.add(<span class="keyword">new</span> BigDecimal(<span class="string">"2.00"</span>));</span><br><span class="line">System.out.println(hs.size());</span><br></pre></td></tr></table></figure>
+<p>得到的结果不是1，而是2。 2.0与2.00被认为是不同的两个数，这在大部分业务上是不能被接受的。简单地翻看源码就会知道，BigDecimal的equals不仅判断了value，还判断了scale。所以就像注释上说的，2.0跟2.00其实是不等的。 <img src="/2020/07/25/post/15956471857025.jpg"></p>
+<p>对于上述的场景，解决方案有两种： * 使用TreeSet来替换HashSet, 因为TreeSet用的是compareTo来比较的 * 调用BigDecimal的stripTrailingZeros()方法，把零截断，这样就保证了scale是一样的了。</p>
+<h2 id="溢出">溢出</h2>
+<p>对于计算机而言，溢出是常规操作。对于一个数字，人脑要灵活多了，不会因为位数过多而出现认知问题，但CPU就不一样了，它最终要依赖电路，以0和1的这种二进制方式来识别这个数字，所以每种类型所能表示的最大长度是有限的。为了让计算机能表示的数字尽可能多且占用位数尽可能少，聪明的人们发明了补码表示法，即第一位为符号位，并且参与计算。比如，一个 4 位的二进制补码数值<code>1011</code>，转换成十进制，就是<code>−1×2^3+0×2^2+1×2^1+1×2^0=−5</code>。如果最高位是 1，这个数必然是负数；最高位是 0，必然是正数。并且，只有 <code>0000</code> 表示 0，<code>1000</code> 在这样的情况下表示 -8。一个 4 位的二进制数，可以表示从 -8 到 7 这 16 个整数，不会白白浪费一位。正因为是这种实现，你会发现，如果是4位的二进制数，最大和最小之间仅仅差 1，7+1不会得到8，而是变成了-8，如此循环往复，溢出就是这个意思。 溢出的问题其实是个大问题，但实际中却相对少发生，所以这里不过多展开，特别地，在高级开发语言里，往往都会有扩展大数计算的方法，比如Java里的BigInteger，就是专门用于大数科学计算领域。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/Java/" rel="tag"># Java</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2020/07/11/post/" rel="next" title="Spring声明式事务，你用对了吗">
+                  <i class="fa fa-chevron-left"></i> Spring声明式事务，你用对了吗
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+    
+    <div class="comments" id="comments"></div>
+  
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#危险的double"><span class="nav-number">1.</span> <span class="nav-text">危险的double</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bigdecimal有时候也不那么靠谱"><span class="nav-number">2.</span> <span class="nav-text">BigDecimal有时候也不那么靠谱</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#溢出"><span class="nav-number">3.</span> <span class="nav-text">溢出</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image"
+      src="/images/avatar.jpg"
+      alt="Funcas">
+  <p class="site-author-name" itemprop="name">Funcas</p>
+  <div class="site-description" itemprop="description">随缘更新，读书笔记、杂记、感想...</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories">
+          
+        
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+        
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/funcas" title="GitHub &rarr; https://github.com/funcas" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://weibo.com/funcasion" title="Weibo &rarr; https://weibo.com/funcasion" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Funcas</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">13k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">12 分钟</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//cdn.bootcss.com/animejs/3.1.0/anime.min.js"></script>
+  <script src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1/dist/Valine.min.js', () => {
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick';
+  guest = guest.split(',').filter(item => {
+    return GUEST.includes(item);
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'brfXUyPtevWzNxHVFTd1Ig5i-9Nh9j0Va',
+    appKey: 'LfGhuxD7dxTdWLukqWDBHmYc',
+    placeholder: '评论区',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false,
+    lang: 'zh-cn' || 'zh-cn',
+    path: location.pathname
+  });
+}, window.Valine);
+</script>
+
+</body>
+</html>
