@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="//cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":true},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="数据库索引：成也索引，败也索引（萧何：喵喵喵）上 谈到数据库索引，应该大家都不陌生，特别在面向CRUD编程中经常碰到。比方说，前线告急，某个页面查询数据特别慢，之后你一通分析之后，发现是SQL查询时间太长，于是就给某个查询字段加个索引，或者加个强制索引解决问题。添加索引这种解决方案可谓立竿见影，并且效果显著，但到底索引是个啥，它又是如何工作的呢？今天就一起来聊聊索引这个话题吧。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据库索引：成也索引，败也索引（萧何：喵喵喵）上">
+<meta property="og:url" content="https://funcas.top/2020/08/09/post/index.html">
+<meta property="og:site_name" content="草堂笔记">
+<meta property="og:description" content="数据库索引：成也索引，败也索引（萧何：喵喵喵）上 谈到数据库索引，应该大家都不陌生，特别在面向CRUD编程中经常碰到。比方说，前线告急，某个页面查询数据特别慢，之后你一通分析之后，发现是SQL查询时间太长，于是就给某个查询字段加个索引，或者加个强制索引解决问题。添加索引这种解决方案可谓立竿见影，并且效果显著，但到底索引是个啥，它又是如何工作的呢？今天就一起来聊聊索引这个话题吧。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://funcas.top/2020/08/09/post/15969565261878.jpg">
+<meta property="og:updated_time" content="2020-08-16T03:40:54.947Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="数据库索引：成也索引，败也索引（萧何：喵喵喵）上">
+<meta name="twitter:description" content="数据库索引：成也索引，败也索引（萧何：喵喵喵）上 谈到数据库索引，应该大家都不陌生，特别在面向CRUD编程中经常碰到。比方说，前线告急，某个页面查询数据特别慢，之后你一通分析之后，发现是SQL查询时间太长，于是就给某个查询字段加个索引，或者加个强制索引解决问题。添加索引这种解决方案可谓立竿见影，并且效果显著，但到底索引是个啥，它又是如何工作的呢？今天就一起来聊聊索引这个话题吧。">
+<meta name="twitter:image" content="https://funcas.top/2020/08/09/post/15969565261878.jpg">
+  <link rel="canonical" href="https://funcas.top/2020/08/09/post/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>数据库索引：成也索引，败也索引（萧何：喵喵喵）上 | 草堂笔记</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c530a536ce02e21013b5b5170e12af3a";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+  <meta name="google-site-verification" content="yJU64JNdiWS_XdeDFFw_aSDOBzJwFVweNrT8PRfbU4Y" />
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">草堂笔记</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://funcas.top/2020/08/09/post/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Funcas">
+      <meta itemprop="description" content="随缘更新，读书笔记、杂记、感想...">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="草堂笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">数据库索引：成也索引，败也索引（萧何：喵喵喵）上
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2020-08-09 18:36:14" itemprop="dateCreated datePublished" datetime="2020-08-09T18:36:14+08:00">2020-08-09</time>
+            </span>
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/08/09/post/#comments" itemprop="discussionUrl"><span class="post-comments-count valine-comment-count" data-xid="/2020/08/09/post/" itemprop="commentCount"></span></a>
+  </span>
+  
+  
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">本文字数：</span>
+              
+              <span>4.2k</span>
+            </span>
+          
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              
+              <span>4 分钟</span>
+            </span>
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>数据库索引：成也索引，败也索引（萧何：喵喵喵）上 谈到数据库索引，应该大家都不陌生，特别在面向CRUD编程中经常碰到。比方说，前线告急，某个页面查询数据特别慢，之后你一通分析之后，发现是SQL查询时间太长，于是就给某个查询字段加个索引，或者加个强制索引解决问题。添加索引这种解决方案可谓立竿见影，并且效果显著，但到底索引是个啥，它又是如何工作的呢？今天就一起来聊聊索引这个话题吧。</p><a id="more"></a>
+<h2 id="索引是什么">索引是什么</h2>
+<p>首先我们来直观地理解下索引。其实索引这个思维并不高深，并且只要接受地九年义务教育的人，基本都是在这个思维下“受过益”——查字典。 回顾一下我们怎么查字典的过程：比如我们要查“索”这个字，先在音序目录中查询“S”这个音序的位置，因为<strong>音序表是有序</strong>的，所以你可以跳过一部分，快速地找到“S”这个音序位置，之后在“S”这个音序下查找“suo”这个读音，同样地，这个读音列表也是<strong>按音序顺序</strong>排列的，你同样可以快速地找到这个suo的位置（你可能第一反应是从后往前找，敏感的孩子，可能一眼就找到了），之后就是翻到对应页码，找到你要查的字，结束查找。</p>
+<p>其实这个过程，正是数据库索引的一个常规执行过程，上述查字典这个过程，经历了一次索引遍历-&gt;回表-&gt;查询出数据的完整过程。那么，假设让你来实现这个功能，你要怎么来设计它呢？首先，通过上述过程，我们发现，索引需要是有序的，并且需要实现高效搜索，那不就是树这个数据结构么！聪明如你。</p>
+<h2 id="索引模型">索引模型</h2>
+<h3 id="二叉搜索树bst">二叉搜索树（BST)</h3>
+<p>二叉搜索树也是课本里的经典数据结构了，它具有如下特征： * 节点的左子树只包含小于当前节点的数。 * 节点的右子树只包含大于当前节点的数。 * 所有左子树和右子树自身必须也是二叉搜索树。</p>
+<p>搜索的时间复杂度是O(log(N))，当然，为了维持这棵树是平衡二叉树，更新的时间复杂度也是 O(log(N))。数据结构这里不过多展开，对时间复杂度没概念的同学，给你张图自己体会下。 <img src="/2020/08/09/post/15969565261878.jpg"></p>
+<p>可见，BST的搜索效率是极高的，随着数据规模增长，运行时间趋于稳定。但是实际上大多数的数据库存储却并不使用二叉树。其原因是，索引不止存在内存中，还要写到磁盘上。在机械硬盘时代，从硬盘随机读一个数据块，少说也要10ms时间，那么假设一个100w行的表，树高为20（<span class="math inline">\(\log_2{1000000}\approx19.93\)</span>)，那么最差的情况下要读20*10ms，这个IO成本太高了，为了让一个查询尽量少地读磁盘，就必须让查询过程访问尽量少的数据块。所以其实在数据库中，索引树其实都是N叉树，这里N的大小，取决于数据规模的大小。假设当N = 1200，当这棵树高为4的时候，索引树已经能容纳17 亿（<span class="math inline">\(1200^3=1728000000\)</span>）的节点了。而这时候查询最坏情况下也就访问3次硬盘。其实这个情况就是MySQL InnoDB引擎下的整型字段索引实现。</p>
+<h3 id="innodb的索引模型">InnoDB的索引模型</h3>
+<p>在 InnoDB 中，表都是根据主键顺序以索引的形式存放的，这种存储方式的表称为索引组织表。 InnoDB使用的是B+树索引模型，所以，每一个索引在 InnoDB 里面对应一棵 B+ 树。B+树的特点有： - 最底层的节点叫作叶子节点，用来存放数据； - 其他上层节点叫作非叶子节点，仅用来存放目录项，作为索引； - 非叶子节点分为不同层次，通过分层来降低每一层的搜索量； - 所有节点按照索引键大小排序，加速范围查找。</p>
+<p>举个例子：假设，我们有一个主键列为 id 的表，表中有字段 name，并且在 name 上有索引。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">create</span> <span class="keyword">table</span> T(</span><br><span class="line">    <span class="keyword">id</span> <span class="built_in">int</span> primary <span class="keyword">key</span>, </span><br><span class="line">    <span class="keyword">name</span> <span class="built_in">varchar</span>(<span class="number">16</span>) <span class="keyword">not</span> <span class="literal">null</span>,</span><br><span class="line">    age <span class="built_in">int</span>,</span><br><span class="line">    <span class="keyword">index</span> (<span class="keyword">name</span>)</span><br><span class="line">)<span class="keyword">engine</span>=<span class="keyword">InnoDB</span>;</span><br></pre></td></tr></table></figure>
+<p>这时将会产生两棵索引树： - 主键索引的叶子节点存的是整行数据。主键索引也被称为聚簇索引（clustered index）。 - 非主键索引的叶子节点内容是主键的值。非主键索引也被称为二级索引（secondary index）。</p>
+<p>那么<strong>基于主键索引和普通索引的查询有什么区别呢</strong>？</p>
+<ul>
+<li>假设发起的查询是 <code>select * from T where id=1</code>，那么这时候走的是聚簇索引，只需要索引id这棵B+树即可。</li>
+<li>假如发起的查询是 <code>select * from T where name='funcas'</code>，那么这时候会先搜索name这棵B+树，拿到主键值，再用得到的id搜索聚簇索引这棵树，得到最终结果。这个过程，就叫做回表。</li>
+</ul>
+<p>也就是说，基于非主键索引的查询需要多扫描一棵索引树。这也就是为什么到处都在说，不要使用select * 的根本原因，假设我们上述的查询语句只需要查询name这个字段，那么使用<code>select name from T where name='funcas'</code>，这时候因为查询的字段name已经在索引里了，所以可以直接返回，就不需要再回表，从而提高了性能。</p>
+<h3 id="索引的代价">索引的代价</h3>
+<p>创建非主键索引的代价主要体现在以下三个方面：维护代价、空间代价和回表代价。</p>
+<h4 id="维护代价">维护代价</h4>
+<p>B+树为了维护数据的有序性，保证查询效率，在数据新增或修改的时候，就需要做必要的维护。 创建多个非主键索引，就需要创建多棵B+树，在新增或修改数据时，不仅要维护主键索引，同时也要维护这多棵非主键索引，而在InnoDB中采用页而不是行的粒度来保存数据，即数据被分成若干页，以页为单位保存在磁盘中，一般是 16KB。所以在最坏的情况下，有可能发生页分裂，即插入数据的时候，发现页已经满了，这时候就是移动部分数据到新的索引页上面去。当然，当有数据删除，使页的利用率降低了以后，会触发页合并，相当于页分裂的逆操作。页分裂与页合并都会有额外的IO代价。</p>
+<h4 id="空间代价">空间代价</h4>
+<p>树这个数据结构是典型的拿空间换时间。虽然非主键索引叶子节点只有主键的数据，但是还是会占据一定的硬盘空间。尽管现在硬盘非常廉价，但是积少成多后的场景也是一个很夸张的数据，之前就有发现过数据库索引创建过多，导致索引占用的空间要比数据本身占用的空间大了一倍。</p>
+<h4 id="回表的代价">回表的代价</h4>
+<p>二级索引不保存原始数据，通过索引找到主键后需要再查询聚簇索引，才能得到我们要的数据。这个其实是DBMS在计算要不要走索引的其中一个计算维度，如果回表的代价大于全表扫描，那么数据库会选择直接全表扫描，比如只有几十条数据时候，我们查询执行计划，正常是直接全表扫描。当然，这个是可以在一定程度上避免的，如果我们需要查询的是索引列索引或联合索引能覆盖的数据，那么查询索引本身已经“覆盖”了需要的数据，不再需要回表查询，这种情况叫作索引覆盖。</p>
+<p>最后，总结下我对索引的一些实践</p>
+<ul>
+<li>不要过早地设计和添加索引，在没投产前，这种经验预估有很大的不确定性，以我的经历，正常上线后的索引是不会有人维护了，除非出现在慢查询做优化，那么此时有50%以上的情况是直接添加索引，而不去检查无效索，因为没人敢动啊，鬼知道我清理了这个所谓的无效索引，明天系统会不会炸。所以，在明确了业务场景，或者日均数据增长量达到一定的值，如5k~1w，那么此时再针对性地进行索引添加与SQL优化，关于SQL优化，推荐阅读《收获，不止SQL优化》（厦门图书馆有借^_^)</li>
+<li>尽量索引较轻的字段，能用int就不要用Varchar，这个其实涉及设计之初的字段选择，所以为什么后来我越来越倾向MySQL使用自增主键而非UUID，实测量级上去了，性能差距还是肉眼可见。针对长文本内容，如果不需要事务的，就选择MyISAM引擎，不然就丢到非关数据为中去，如ES、MongoDB，专业的人干专业的事</li>
+<li>尽量少用select *，这个应该是基操了，这里就不多说了。根本原因就是，一定会回表，且不可优化</li>
+</ul>
+<h2 id="mysql创建索引的一般原则">MySQL创建索引的一般原则</h2>
+<p>之前有遇到一个比较久，历经数个团队维护过的系统的生产数据库，一个表就建了数十个索引！原因其实很明显，谁也不敢动旧的索引，慢查询就调试一下，发现不走原有的索引，就干脆再建一个，发现可以被使用上了，那么就这样了吧，任务完成了。</p>
+<p>所以，其实虽然你建了索引，但DBMS可能根本不鸟你。 下面总结下MySQL索引的几个常见规则：</p>
+<p><strong>索引只能匹配列前缀</strong>，比如下面这个SQL:</p>
+<blockquote>
+<p>SELECT * FROM T WHERE name LIKE '%fun';</p>
+</blockquote>
+<p>这时候，是没有办法使用上索引的，通过上面的分析，也许这个问题就不那么难理解了，索引是树型结构的，所以必须要有前缀给它去匹配查询呀，如果前缀未知，那么DBMS只能全表扫描啦。而反过来，换成如下SQL:</p>
+<blockquote>
+<p>SELECT * FROM T WHERE name LIKE 'fun%';</p>
+</blockquote>
+<p>就可以走索引了。这也正是为什么大数据量查询的时候，尽量别用全模糊，会是一场灾难。</p>
+<p><strong>条件上带函数无法走索引</strong>，这个其实早年我也犯过这个错，特别容易踩坑的点，在条件上用concat去拼装字符串啥的，这时候将会导致索引失效。关于这点，Oracle还是比较牛逼的，有专门的函数索引用于处理这个问题，但不管怎么样，除非万不得已，像这种简单的字符串拼接、拆分，要用代码去处理，不要使用SQL来处理。专业的人，干专业的事。</p>
+<p><strong>最左原则</strong>，即联合索引只能匹配左边的列。比如之前那个表T，我再创建一个(name, age)的联合索引，那么这个时候，我查询<code>name</code>，<code>name, age</code>时是可以走索引的，但是单独查询<code>age</code>将不走索引。</p>
+<p>原因也很简单，在联合索引的情况下，数据是按照索引第一列排序，第一列数据相同时才会按照第二列排序。也就是说，如果我们想使用联合索引中尽可能多的列，查询条件中的各个列必须是联合索引中从最左边开始连续的列。如果我们仅仅按照第二列搜索，就无法走索引。所以在实际使用中，要注意联合索引的字段顺序，尽量让一个联合索引，涵盖更多的查询场景，以提高索引的利用率，这个其实在列表查询中出镜率是最高的。</p>
+<p><strong>区分度很低的字段不要建索引</strong>，比如状态、性别这种字段，可预计的就是个位数的值的，不要创建索引了，最极端的，像性别只有两个值，那么这时候，树的搜索性就退化了，于是跟全表扫并没有什么区别了。这里有个专业的说法，叫选择性（SELECTIVITY) &gt; 选择性 = 基数 / 总行数 * 100%</p>
+<p><strong>基数</strong>是某个列的唯一键的数量，比如上面说的性别，只有男、女两个值，那么基数就是2，可以使用 <code>select count(distinct field_name) from T</code>来得出某个列的基数 <strong>总行数</strong>就是这个表的总数</p>
+<p>那么对应的，有个经验值是，当一个列的选择性大地20%时，说明该列的数据分布比较均衡了，就可以在该列上建立索引。参考：《SQL优化核心思想》</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2020/08/02/post/" rel="next" title="集合类之List那些事">
+                  <i class="fa fa-chevron-left"></i> 集合类之List那些事
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2020/08/16/post/" rel="prev" title="数据库索引：成也索引，败也索引（萧何：喵喵喵）下">
+                  数据库索引：成也索引，败也索引（萧何：喵喵喵）下 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+    
+    <div class="comments" id="comments"></div>
+  
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#索引是什么"><span class="nav-number">1.</span> <span class="nav-text">索引是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#索引模型"><span class="nav-number">2.</span> <span class="nav-text">索引模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#二叉搜索树bst"><span class="nav-number">2.1.</span> <span class="nav-text">二叉搜索树（BST)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#innodb的索引模型"><span class="nav-number">2.2.</span> <span class="nav-text">InnoDB的索引模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#索引的代价"><span class="nav-number">2.3.</span> <span class="nav-text">索引的代价</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#维护代价"><span class="nav-number">2.3.1.</span> <span class="nav-text">维护代价</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#空间代价"><span class="nav-number">2.3.2.</span> <span class="nav-text">空间代价</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#回表的代价"><span class="nav-number">2.3.3.</span> <span class="nav-text">回表的代价</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#mysql创建索引的一般原则"><span class="nav-number">3.</span> <span class="nav-text">MySQL创建索引的一般原则</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image"
+      src="/images/avatar.jpg"
+      alt="Funcas">
+  <p class="site-author-name" itemprop="name">Funcas</p>
+  <div class="site-description" itemprop="description">随缘更新，读书笔记、杂记、感想...</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories">
+          
+        
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/funcas" title="GitHub &rarr; https://github.com/funcas" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://weibo.com/funcasion" title="Weibo &rarr; https://weibo.com/funcasion" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Funcas</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">27k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">25 分钟</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//cdn.bootcss.com/animejs/3.1.0/anime.min.js"></script>
+  <script src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1/dist/Valine.min.js', () => {
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick';
+  guest = guest.split(',').filter(item => {
+    return GUEST.includes(item);
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'brfXUyPtevWzNxHVFTd1Ig5i-9Nh9j0Va',
+    appKey: 'LfGhuxD7dxTdWLukqWDBHmYc',
+    placeholder: '评论区',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false,
+    lang: 'zh-cn' || 'zh-cn',
+    path: location.pathname
+  });
+}, window.Valine);
+</script>
+
+</body>
+</html>

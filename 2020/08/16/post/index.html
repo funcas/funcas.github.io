@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="//cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":true},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="通过前面的介绍，我们知道了，查询数据的时候，即可以直接在主键索引上进行全表扫描，也可以走非主键索引，扫描后再到主键索引上回表查出最终数据。那么数据库是怎么确定要走哪种方案呢，在日常使用中，是不是也经常被MySQL误走索引而坑过呢。首先我们先准备一个测试数据吧。我们先建一张简单的表，表里有id, x, y三个字段，并给x和y添加索引">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据库索引：成也索引，败也索引（萧何：喵喵喵）下">
+<meta property="og:url" content="https://funcas.top/2020/08/16/post/index.html">
+<meta property="og:site_name" content="草堂笔记">
+<meta property="og:description" content="通过前面的介绍，我们知道了，查询数据的时候，即可以直接在主键索引上进行全表扫描，也可以走非主键索引，扫描后再到主键索引上回表查出最终数据。那么数据库是怎么确定要走哪种方案呢，在日常使用中，是不是也经常被MySQL误走索引而坑过呢。首先我们先准备一个测试数据吧。我们先建一张简单的表，表里有id, x, y三个字段，并给x和y添加索引">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974856545859.jpg">
+<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974857899477.jpg">
+<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974858891601.jpg">
+<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974860154226.jpg">
+<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974908497102.jpg">
+<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974918728648.jpg">
+<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974921218546.jpg">
+<meta property="og:updated_time" content="2020-08-16T03:43:55.730Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="数据库索引：成也索引，败也索引（萧何：喵喵喵）下">
+<meta name="twitter:description" content="通过前面的介绍，我们知道了，查询数据的时候，即可以直接在主键索引上进行全表扫描，也可以走非主键索引，扫描后再到主键索引上回表查出最终数据。那么数据库是怎么确定要走哪种方案呢，在日常使用中，是不是也经常被MySQL误走索引而坑过呢。首先我们先准备一个测试数据吧。我们先建一张简单的表，表里有id, x, y三个字段，并给x和y添加索引">
+<meta name="twitter:image" content="https://funcas.top/2020/08/16/post/15974856545859.jpg">
+  <link rel="canonical" href="https://funcas.top/2020/08/16/post/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>数据库索引：成也索引，败也索引（萧何：喵喵喵）下 | 草堂笔记</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c530a536ce02e21013b5b5170e12af3a";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+  <meta name="google-site-verification" content="yJU64JNdiWS_XdeDFFw_aSDOBzJwFVweNrT8PRfbU4Y" />
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">草堂笔记</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://funcas.top/2020/08/16/post/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Funcas">
+      <meta itemprop="description" content="随缘更新，读书笔记、杂记、感想...">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="草堂笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">数据库索引：成也索引，败也索引（萧何：喵喵喵）下
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2020-08-16 11:38:41" itemprop="dateCreated datePublished" datetime="2020-08-16T11:38:41+08:00">2020-08-16</time>
+            </span>
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/08/16/post/#comments" itemprop="discussionUrl"><span class="post-comments-count valine-comment-count" data-xid="/2020/08/16/post/" itemprop="commentCount"></span></a>
+  </span>
+  
+  
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">本文字数：</span>
+              
+              <span>3k</span>
+            </span>
+          
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              
+              <span>3 分钟</span>
+            </span>
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>通过前面的介绍，我们知道了，查询数据的时候，即可以直接在主键索引上进行全表扫描，也可以走非主键索引，扫描后再到主键索引上回表查出最终数据。那么数据库是怎么确定要走哪种方案呢，在日常使用中，是不是也经常被MySQL误走索引而坑过呢。</p><p>首先我们先准备一个测试数据吧。</p><p>我们先建一张简单的表，表里有id, x, y三个字段，并给x和y添加索引</p><a id="more"></a>
+
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">create</span> <span class="keyword">table</span> t (</span><br><span class="line">    <span class="keyword">id</span> <span class="built_in">bigint</span>(<span class="number">20</span>) <span class="keyword">not</span> <span class="literal">null</span> PRIMARY <span class="keyword">key</span>,</span><br><span class="line">    x <span class="built_in">int</span>,</span><br><span class="line">    y <span class="built_in">INT</span>,</span><br><span class="line">    <span class="keyword">key</span> x (x),</span><br><span class="line">    <span class="keyword">key</span> y (y)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>接着我们创建一个简单的过程，进行数据插入，我们这里插入10w条测试数据，为了防止优化器作祟，我们对值做随机数处理。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">delimiter ;;</span><br><span class="line"><span class="keyword">create</span> <span class="keyword">procedure</span> mock_data()</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">  <span class="keyword">declare</span> i <span class="built_in">int</span>;</span><br><span class="line">  <span class="keyword">set</span> i=<span class="number">1</span>;</span><br><span class="line">  while(i&lt;=100000)do</span><br><span class="line">    <span class="keyword">insert</span> <span class="keyword">into</span> t(<span class="keyword">id</span>, x, y) <span class="keyword">values</span>(i, <span class="keyword">FLOOR</span>(<span class="number">1</span> + (<span class="keyword">RAND</span>() * <span class="number">100000</span>)), <span class="keyword">FLOOR</span>(<span class="number">1</span> + (<span class="keyword">RAND</span>() * <span class="number">100000</span>)));</span><br><span class="line">    <span class="keyword">set</span> i=i+<span class="number">1</span>;</span><br><span class="line">  <span class="keyword">end</span> <span class="keyword">while</span>;</span><br><span class="line"><span class="keyword">end</span>;;</span><br><span class="line">delimiter ;</span><br></pre></td></tr></table></figure>
+<p>最后，执行这个过程，去喝杯咖啡。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">call</span> mock_data()</span><br></pre></td></tr></table></figure>
+<p>模拟数据插入完成后，我们简单执行个sql看一下x列的选择性如何：</p>
+<p><img src="/2020/08/16/post/15974856545859.jpg"></p>
+<p>可以看到选择性达到了63%，大于20%，按经验值是可以，也应该建索引的。</p>
+<p>然后，我们来分析一条非常简单的sql语句：</p>
+<blockquote>
+<p>select id, x, y from t where x between 20000 and 30000;</p>
+</blockquote>
+<p>直觉告诉你：这还用分析么，铁定走索引啊！然而... <img src="/2020/08/16/post/15974857899477.jpg"></p>
+<p>对，你没看错，MySQL选择了全表扫描。</p>
+<p>于是我们再稍微地改一下sql条件：</p>
+<blockquote>
+<p>select id, x, y from t where x between 20000 and 29000;</p>
+</blockquote>
+<p><img src="/2020/08/16/post/15974858891601.jpg"></p>
+<p>这一次，奇迹般地走了索引！ <img src="/2020/08/16/post/15974860154226.jpg"></p>
+<p>这也太随意了吧，难道MySQL是“猜拳”决定要不要走索引的么。</p>
+<h2 id="数据库基本执行代价来决定是否走辅助索引">数据库基本执行代价来决定是否走辅助索引</h2>
+<p>那么数据库是如何评估是否要走索引呢？其实，数据库处理这件事情也很简单，数据库在查询数据之前，会先评估可能的方案的执行成本（cost)，最后，哪种成本低就用哪种。就好比你上街买菜，张阿姨的菜摊5毛/斤，王婶的6毛/斤，那就选张阿姨的。不过这里可不是正儿八经地把每种方案都执行一遍来进行比较，而是一种估算。 既然要进行估计，哪就得有估计的量化指标，也就是上面说的成本，这里的成本，主要包括IO成本和CPU成本： - IO成本：将数据从磁盘上加载到内存的成本。在MySQL里，一般读取一个页的成本定义为1 - CPU成本： 对数据进行筛选、过滤、排序等操作的CPU成本，一般检测记录成本定义为0.2</p>
+<p>基于此，假如是全表扫描： * 主键索引占用的页面数，用来计算IO成本，其中一个页面是16k * 表中的记录数，用来计算搜索的成本</p>
+<p>我们知道,MySQL InnoDB引擎的记录数是没有实时统计的。那么每次估计成本都要去跑一次sql查询总记录数么？这个代价就太大了，所以MySQL维护了一个表的粗略统计信息。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">table</span> <span class="keyword">status</span> <span class="keyword">like</span> <span class="string">'t'</span>\G;</span><br></pre></td></tr></table></figure>
+<p><img src="/2020/08/16/post/15974908497102.jpg"></p>
+<p>通过这个查询我们可以看到，表的行数（Rows)，大小（Data_length)，等信息，可是我们发现，这个总行数跟我们实际行数是有出入的，我们实际行数其实只有10w， 而这个rows多了44行，这也就是我们所谓的粗略的信息，这里并不是做实时的精确统计。BTW，这也是解决分页时count(*)非常慢的其中一种解决方案。</p>
+<p>虽然不是精确的统计信息，但是用来做成本估计，其实是够用的了。我们套用上面的成本系数来计算： - IO: 4734976 ÷ (16 x 1024) = 289 - CPU: 100044 x 0.2 ≈ 20009 - 总计： 20009 + 289 = 20298</p>
+<p>所以全表扫描成本大约在20298左右。</p>
+<p>所以，MySQL选择执行计划其实是根据这样的一个个量化后的标准来选择走什么样的执行计划，还是相对比较客观的。但是，这个估计是强依赖于统计信息的，有时候因为大量的增删，会导致统计信息不准确，这个时候就会导致MySQL走错索引。这时可以有两种解决方式：</p>
+<p><strong>第一种</strong>：既然是统计信息不对，那就修正。analyze table t 命令，可以用来重新统计索引信息。 <img src="/2020/08/16/post/15974918728648.jpg"></p>
+<p>所以在实践中，如果你发现 explain 的结果预估的 rows 值跟实际情况差距比较大，可以采用这个方法来处理。</p>
+<p><strong>第二种</strong>： 简单粗野地给sql语句加强制索引<code>FORCE INDEX(index_name)</code> <img src="/2020/08/16/post/15974921218546.jpg"></p>
+<p>加上force index后，我们看到执行计划就走了索引了。对于ORACLE可以用<code>/*+index(t idx_name)*/</code>这个HINT来进行强制索引如: <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="comment">/*+index(t x) */</span> * <span class="keyword">from</span> t <span class="keyword">where</span> x <span class="keyword">between</span> <span class="number">20000</span> <span class="keyword">and</span> <span class="number">30000</span>;</span><br></pre></td></tr></table></figure></p>
+<h2 id="optimizer-trace">optimizer trace</h2>
+<p>最后，我们来介绍一下MySQL5.6之后新增的optimizer trace功能，可以用来查看执行计划的整个过程。有了这个功能，我们不仅可以了解优化器的选择过程，更可以了解每一个执行环节的成本。具体的文档可以参看<a href="https://dev.mysql.com/doc/internals/en/optimizer-tracing.html" target="_blank" rel="noopener">官方文档</a>。 如下语句打开 optimizer_trace 后，再执行 SQL 就可以查询 information_schema.OPTIMIZER_TRACE 表查看执行计划了，最后可以关闭 optimizer_trace。用完记得关闭，特别在线上环境使用，这玩意会损耗部分性能。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SET</span> optimizer_trace=<span class="string">"enabled=on"</span>;</span><br><span class="line"><span class="keyword">select</span> x, y <span class="keyword">from</span> t <span class="keyword">where</span> x <span class="keyword">BETWEEN</span> <span class="number">20000</span> <span class="keyword">and</span> <span class="number">30000</span>;</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> information_schema.OPTIMIZER_TRACE;</span><br><span class="line"><span class="keyword">SET</span> optimizer_trace=<span class="string">"enabled=off"</span>;</span><br></pre></td></tr></table></figure>
+<p>我们在trace字段里，可以拿到一串很长的JSON描述，我们截取部分来看一下：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">"range_analysis": &#123;</span><br><span class="line">  "table_scan": &#123;</span><br><span class="line">    "rows": 100044,</span><br><span class="line">    "cost": 20300</span><br><span class="line">  &#125;,</span><br><span class="line">  ....</span><br></pre></td></tr></table></figure>
+<p>这里全表扫描成本提示是20300，跟我们上文计算出来的20298是非常相近的。 我们再来看索引的情况： <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"index"</span>: <span class="string">"x"</span>,</span><br><span class="line">    <span class="attr">"ranges"</span>: [</span><br><span class="line">      <span class="string">"20000 &lt;= x &lt;= 30000"</span></span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">"index_dives_for_eq_ranges"</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">"rowid_ordered"</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">"using_mrr"</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">"index_only"</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">"rows"</span>: <span class="number">17562</span>,</span><br><span class="line">    <span class="attr">"cost"</span>: <span class="number">21075</span>,</span><br><span class="line">    <span class="attr">"chosen"</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">"cause"</span>: <span class="string">"cost"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以发现，走索引的成本是21075，要比全表扫描的成本来得更高，所以最终结论，是走全表扫描。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">"best_access_path": &#123;</span><br><span class="line">  "considered_access_paths": [</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">"rows_to_scan"</span>: <span class="number">100044</span>,</span><br><span class="line">      <span class="attr">"access_type"</span>: <span class="string">"scan"</span>,</span><br><span class="line">      <span class="attr">"resulting_rows"</span>: <span class="number">100044</span>,</span><br><span class="line">      <span class="attr">"cost"</span>: <span class="number">20298</span>,</span><br><span class="line">      <span class="attr">"chosen"</span>: <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过这个小工具，我们就能对数据库怎么决策执行计划的过程了如指掌了。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2020/08/09/post/" rel="next" title="数据库索引：成也索引，败也索引（萧何：喵喵喵）上">
+                  <i class="fa fa-chevron-left"></i> 数据库索引：成也索引，败也索引（萧何：喵喵喵）上
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+    
+    <div class="comments" id="comments"></div>
+  
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#数据库基本执行代价来决定是否走辅助索引"><span class="nav-number">1.</span> <span class="nav-text">数据库基本执行代价来决定是否走辅助索引</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#optimizer-trace"><span class="nav-number">2.</span> <span class="nav-text">optimizer trace</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image"
+      src="/images/avatar.jpg"
+      alt="Funcas">
+  <p class="site-author-name" itemprop="name">Funcas</p>
+  <div class="site-description" itemprop="description">随缘更新，读书笔记、杂记、感想...</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories">
+          
+        
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/funcas" title="GitHub &rarr; https://github.com/funcas" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://weibo.com/funcasion" title="Weibo &rarr; https://weibo.com/funcasion" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Funcas</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">27k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">25 分钟</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//cdn.bootcss.com/animejs/3.1.0/anime.min.js"></script>
+  <script src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1/dist/Valine.min.js', () => {
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick';
+  guest = guest.split(',').filter(item => {
+    return GUEST.includes(item);
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'brfXUyPtevWzNxHVFTd1Ig5i-9Nh9j0Va',
+    appKey: 'LfGhuxD7dxTdWLukqWDBHmYc',
+    placeholder: '评论区',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false,
+    lang: 'zh-cn' || 'zh-cn',
+    path: location.pathname
+  });
+}, window.Valine);
+</script>
+
+</body>
+</html>

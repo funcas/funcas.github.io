@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="//cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":true},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="在日常工作中，线性表相关的数据结构算是比较常用的了，而其中的链表与数组这两个数据结构的出镜率则更高。它们往往能高效地管理和操作一批类型相同的数据，比如从数据库读取一批数据列表，准备一批数据来批量发送消息等众多场景都有它们的身影。在Java里面，常用的有ArrayList和LinkedList这两个列表的实现，今天我们就来聊聊这两个常用的数据结构。 从名字可以看出来， ArrayList其实就是数组">
+<meta property="og:type" content="article">
+<meta property="og:title" content="集合类之List那些事">
+<meta property="og:url" content="https://funcas.top/2020/08/02/post/index.html">
+<meta property="og:site_name" content="草堂笔记">
+<meta property="og:description" content="在日常工作中，线性表相关的数据结构算是比较常用的了，而其中的链表与数组这两个数据结构的出镜率则更高。它们往往能高效地管理和操作一批类型相同的数据，比如从数据库读取一批数据列表，准备一批数据来批量发送消息等众多场景都有它们的身影。在Java里面，常用的有ArrayList和LinkedList这两个列表的实现，今天我们就来聊聊这两个常用的数据结构。 从名字可以看出来， ArrayList其实就是数组">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://funcas.top/2020/08/02/post/15956542723402/2.png">
+<meta property="og:image" content="https://funcas.top/2020/08/02/post/15956542723402/1.png">
+<meta property="og:updated_time" content="2020-08-16T03:35:56.007Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="集合类之List那些事">
+<meta name="twitter:description" content="在日常工作中，线性表相关的数据结构算是比较常用的了，而其中的链表与数组这两个数据结构的出镜率则更高。它们往往能高效地管理和操作一批类型相同的数据，比如从数据库读取一批数据列表，准备一批数据来批量发送消息等众多场景都有它们的身影。在Java里面，常用的有ArrayList和LinkedList这两个列表的实现，今天我们就来聊聊这两个常用的数据结构。 从名字可以看出来， ArrayList其实就是数组">
+<meta name="twitter:image" content="https://funcas.top/2020/08/02/post/15956542723402/2.png">
+  <link rel="canonical" href="https://funcas.top/2020/08/02/post/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>集合类之List那些事 | 草堂笔记</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c530a536ce02e21013b5b5170e12af3a";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+  <meta name="google-site-verification" content="yJU64JNdiWS_XdeDFFw_aSDOBzJwFVweNrT8PRfbU4Y" />
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">草堂笔记</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://funcas.top/2020/08/02/post/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Funcas">
+      <meta itemprop="description" content="随缘更新，读书笔记、杂记、感想...">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="草堂笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">集合类之List那些事
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2020-08-02 11:29:58" itemprop="dateCreated datePublished" datetime="2020-08-02T11:29:58+08:00">2020-08-02</time>
+            </span>
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/08/02/post/#comments" itemprop="discussionUrl"><span class="post-comments-count valine-comment-count" data-xid="/2020/08/02/post/" itemprop="commentCount"></span></a>
+  </span>
+  
+  
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">本文字数：</span>
+              
+              <span>6.9k</span>
+            </span>
+          
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              
+              <span>6 分钟</span>
+            </span>
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在日常工作中，线性表相关的数据结构算是比较常用的了，而其中的链表与数组这两个数据结构的出镜率则更高。它们往往能高效地管理和操作一批类型相同的数据，比如从数据库读取一批数据列表，准备一批数据来批量发送消息等众多场景都有它们的身影。在Java里面，常用的有ArrayList和LinkedList这两个列表的实现，今天我们就来聊聊这两个常用的数据结构。 从名字可以看出来， ArrayList其实就是数组，它是动态数组实现，能自动扩容；而LinkedList是双向链表的实现，所以它是不需要扩容的。</p><a id="more"></a>
+<h2 id="知行合一探索arraylist和linkedlist">知行合一，探索ArrayList和LinkedList</h2>
+<p>网上搜索一下数组和链表的时间复杂度，大多会有以下的结论： * 数组，随机元素访问的时间复杂度是 O(1)，元素插入、删除操作是 O(n) * 链表，随机元素访问的时间复杂度是 O(n)，元素插入、删除操作是 O(1)</p>
+<p>于是基于这个理论，（不考虑线程安全的前提下）我们一般会在读多写少的时候选择ArraList，而在大量插入，随机读少的场景下使用LinkedList。那么事实真的是这样子的么？我们不妨写个简单的测试代码对比一下。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ListCompare</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> TOTAL = <span class="number">50000</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> <span class="keyword">int</span> LOOP = <span class="number">50000</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> LinkedList&lt;Integer&gt; <span class="title">prepareLinkedList</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        LinkedList&lt;Integer&gt; list = <span class="keyword">new</span> LinkedList&lt;&gt;();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; TOTAL; i++) &#123;</span><br><span class="line">            list.add(i);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> list;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> ArrayList&lt;Integer&gt; <span class="title">prepareArrayList</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        ArrayList&lt;Integer&gt; list = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; TOTAL; i++) &#123;</span><br><span class="line">            list.add(i);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> list;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">linkedListRandomAdd</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        LinkedList&lt;Integer&gt; list = prepareLinkedList();</span><br><span class="line">        <span class="keyword">long</span> start = System.currentTimeMillis();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP; i++) &#123;</span><br><span class="line">            list.add(ThreadLocalRandom.current().nextInt(TOTAL), -<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.printf(<span class="string">"%s：%d(ms)\n"</span>, <span class="string">"LinkedList随机插入耗时"</span>, System.currentTimeMillis() - start);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">arrayListRandomAdd</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        ArrayList&lt;Integer&gt; list = prepareArrayList();</span><br><span class="line">        <span class="keyword">long</span> start = System.currentTimeMillis();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP; i++) &#123;</span><br><span class="line">            list.add(ThreadLocalRandom.current().nextInt(TOTAL), -<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.printf(<span class="string">"%s：%d(ms)\n"</span>, <span class="string">"ArrayList随机插入耗时"</span>, System.currentTimeMillis() - start);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">linkedListRandomGet</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        LinkedList&lt;Integer&gt; list = prepareLinkedList();</span><br><span class="line">        <span class="keyword">long</span> start = System.currentTimeMillis();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP; i++) &#123;</span><br><span class="line">            list.get(ThreadLocalRandom.current().nextInt(TOTAL));</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.printf(<span class="string">"%s：%d(ms)\n"</span>, <span class="string">"LinkedList随机读耗时"</span>, System.currentTimeMillis() - start);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">arrayListRandomGet</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        ArrayList&lt;Integer&gt; list = prepareArrayList();</span><br><span class="line">        <span class="keyword">long</span> start = System.currentTimeMillis();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP; i++) &#123;</span><br><span class="line">            list.get(ThreadLocalRandom.current().nextInt(TOTAL));</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.printf(<span class="string">"%s：%d(ms)\n"</span>, <span class="string">"ArrayList随机读耗时"</span>, System.currentTimeMillis() - start);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">arrayListForEach</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        ArrayList&lt;Integer&gt; list = prepareArrayList();</span><br><span class="line">        <span class="keyword">long</span> start = System.currentTimeMillis();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP; i++) &#123;</span><br><span class="line">            list.get(i);</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.printf(<span class="string">"%s：%d(ms)\n"</span>, <span class="string">"ArrayList顺序读耗时"</span>, System.currentTimeMillis() - start);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">linkedListForEach</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        LinkedList&lt;Integer&gt; list = prepareLinkedList();</span><br><span class="line">        <span class="keyword">long</span> start = System.currentTimeMillis();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP; i++) &#123;</span><br><span class="line">            list.get(i);</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.printf(<span class="string">"%s：%d(ms)\n"</span>, <span class="string">"LinkedList顺序读耗时"</span>, System.currentTimeMillis() - start);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        arrayListRandomAdd();</span><br><span class="line">        linkedListRandomAdd();</span><br><span class="line">        arrayListRandomGet();</span><br><span class="line">        linkedListRandomGet();</span><br><span class="line">        arrayListForEach();</span><br><span class="line">        linkedListForEach();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行结果如下： <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ArrayList随机插入耗时：476(ms)</span><br><span class="line">LinkedList随机插入耗时：8547(ms)</span><br><span class="line">ArrayList随机读耗时：6(ms)</span><br><span class="line">LinkedList随机读耗时：1409(ms)</span><br><span class="line">ArrayList顺序读耗时：2(ms)</span><br><span class="line">LinkedList顺序读耗时：1248(ms)</span><br></pre></td></tr></table></figure></p>
+<p>在随机读和顺序读方面，ArrayList占压倒性优势，这个是在意料之中的事情，至于为什么顺序读会比随机读更快一些，我们后面再做解释；但是想不到的是，随机插入情况下，LinkedList居然也完败！是不是人生第一次开始对大O表示法产生怀疑了？其实从算法维度给的O(1)指的是插入这个原子操作的时间复杂度是O(1)，也就是说，你已经知道了要插入节点位置的指针，那么从这个维度来计算，它确实是O(1)的。可是，实际使用场景中，是不可能知道你的随机位置的指针的，这个时候不得不从链表头指针开始遍历，直到找到这个要插入的位置节点，所以在最坏的情况下，需要O(n)的前置操作。所以在同样的场景下，LinkedList并不见得能优秀多少。其实，做更多的实验的话，你会发现LinkedList在众多场景下并不见得比ArrayList有优势。这也就是为什么Redis要使用跳表来实现有序集合而不是直接使用链表，因为跳表可以将查询的复杂度降低到O(logn)，这是个非常优秀的时间复杂度了，对于链表，只要搜索速度提高了，整体性能就会高起来。 对于这个问题，我个人也是工作几年后才开始抱着怀疑的态度去做实验观察，发现结果大跌眼镜，结合源码分析了一下，才发现问题所在。所以还是那句话，尽信书则不如无书。学习一定要知行合一，从书上学到的知识，要付诸实践后，才会成为你的知识。其实后来我特地去翻阅了一下大学的《数据结构》课本（王晓东版，我们院长 &gt;_&lt; ），才发现人家压根就没跟你讲，链表的插入是O(1)…… <img src="/2020/08/02/post/15956542723402/2.png" alt="未命名"> 如书上所说，的这种O(K)复杂度还是比较靠谱的（k表示插入的位置）。 所以，对于ArrayList和LinkedList在使用过程中，一定要注意使用场景，其实大部分场景下，ArrayList都是表现特别优秀了，我能想到的几种场景使用LinkedList是： * 只会进行头部插入数据，这时候相当于插入位置已知，而数组则需要O(n)移动所有元素，1.8以前的HashMap链表就是头插 * 内存紧张则碎片化严重的场合，链表的好处就是不需要连续的地址空间，所以只要内存还有空闲，它就可以添加元素，数组则不然，每次扩容都需要一段连续的地址空间，如果碎片化严重，那么可能明明还有空间，却初始化失败了</p>
+<p>回到之前的测试结果，我们发现顺序遍历数组速度要比随机遍历来得好一丢丢，原因是数组是连续的内存空间，而CPU读内存时做了优化，并不是需要哪个读哪个，而是读“一行”并写入CPU调整缓存，所以顺序读的时候，因为后续的内存数据已经进入缓存了，不需要再做访存的操作，故速度会比随机读来得快一些。</p>
+<h2 id="警惕sublist有可能带来oom">警惕subList有可能带来OOM</h2>
+<p>先来看一段简单的代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SubListOOM</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> List&lt;List&lt;Integer&gt;&gt; data = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> ArrayList&lt;Integer&gt; <span class="title">prepareArrayList</span><span class="params">(<span class="keyword">int</span> total)</span> </span>&#123;</span><br><span class="line">        ArrayList&lt;Integer&gt; list = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; total; i++) &#123;</span><br><span class="line">            list.add(i);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> list;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; i++) &#123;</span><br><span class="line">            List&lt;Integer&gt; rawList = prepareArrayList(<span class="number">10000</span>);</span><br><span class="line">            data.add(rawList.subList(<span class="number">0</span>, <span class="number">1</span>));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>很简单，对一个10000个元素的数组subList出一个，然后放到data里面去，重复这个操作1000次。 我们对上面这个代码添加jvm参数</p>
+<blockquote>
+<p>-Xmx32m -XX:-UseGCOverheadLimit -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/Users/funcas/oom</p>
+</blockquote>
+<p>限制它的最大内存为32M（这个内存来说，对于1000个元素是够用的）并且设置在发生OOM时，输出dump文件。 运行后，不出料地OOM了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Exception in thread &quot;main&quot; java.lang.OutOfMemoryError: Java heap space</span><br><span class="line">	at java.lang.Integer.valueOf(Integer.java:832)</span><br><span class="line">	at com.funcas.parctice.collection.SubListOOM.prepareArrayList(SubListOOM.java:20)</span><br><span class="line">	at com.funcas.parctice.collection.SubListOOM.main(SubListOOM.java:27)</span><br></pre></td></tr></table></figure>
+<p>于是我们拿HA来分析下dump出来的堆快照</p>
+<figure>
+<img src="/2020/08/02/post/15956542723402/1.png" alt><figcaption>截屏2020-08-02 下午12.05.22</figcaption>
+</figure>
+<p>可以发现，人家直接给你推测出ArrayList发生了内存泄露，再仔细查看下，发现rawList的数量有30个之多。按正常情况下，rawList应该是会被GC回收的，现在没有被回收，说明一直被强引用着，所以最终怀疑是subList搞的鬼。于是我们查看下subList的实现：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> List&lt;E&gt; <span class="title">subList</span><span class="params">(<span class="keyword">int</span> fromIndex, <span class="keyword">int</span> toIndex)</span> </span>&#123;</span><br><span class="line">    subListRangeCheck(fromIndex, toIndex, size);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> SubList(<span class="keyword">this</span>, <span class="number">0</span>, fromIndex, toIndex);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//...省略无数代码</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">SubList</span> <span class="keyword">extends</span> <span class="title">AbstractList</span>&lt;<span class="title">E</span>&gt; <span class="keyword">implements</span> <span class="title">RandomAccess</span> </span>&#123;</span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">final</span> AbstractList&lt;E&gt; parent;</span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> parentOffset;</span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> offset;</span><br><span class="line">        <span class="keyword">int</span> size;</span><br><span class="line"></span><br><span class="line">        SubList(AbstractList&lt;E&gt; parent,</span><br><span class="line">                <span class="keyword">int</span> offset, <span class="keyword">int</span> fromIndex, <span class="keyword">int</span> toIndex) &#123;</span><br><span class="line">            <span class="keyword">this</span>.parent = parent;</span><br><span class="line">            <span class="keyword">this</span>.parentOffset = fromIndex;</span><br><span class="line">            <span class="keyword">this</span>.offset = offset + fromIndex;</span><br><span class="line">            <span class="keyword">this</span>.size = toIndex - fromIndex;</span><br><span class="line">            <span class="keyword">this</span>.modCount = ArrayList.<span class="keyword">this</span>.modCount;</span><br><span class="line">        &#125;</span><br><span class="line">    <span class="comment">// 省略无数代码...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>豁然开朗了，subList出来的并不是普通的List，而是ArrayList自己维护的一个SubList内部类，并且SubList内部会引用ArrayList实例。所以元凶就找到了，大量地强引用subList实例会让原始的ArrayList得不到释放，从而导致内存泄露而引发OOM。</p>
+<p>解决方案也很简单，不要直接使用返回的SubList，而是做一个深拷贝出来一个新的ArrayList即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; i++) &#123;</span><br><span class="line">    List&lt;Integer&gt; rawList = prepareArrayList(<span class="number">10000</span>);</span><br><span class="line">    <span class="comment">// 修复</span></span><br><span class="line">    data.add(<span class="keyword">new</span> ArrayList(rawList.subList(<span class="number">0</span>, <span class="number">1</span>)));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="慎用arrays.aslist">慎用Arrays.asList()</h2>
+<p>这个api是当年写android在官方demo上学到的，用来模拟ListView的数据，把一串数组内容直接转成List传给adapter，用起来特别爽。但是这玩意儿真的是从入门到放弃，后面慢慢地转用guava包了。下面就讲讲这个api的几个注意事项，这里不作大量展开，因为这个api估计现在也少有人用了。 * 参数不能用基本数据类型，如：int[]，这会导致出来的是一个只包含一个int数组的List，需要使用包装类型才可以按预期输出 * 转出来的List是个只读List，对其进行添加元素会抛异常，原因是这个List是Arrays的一个内部类，并没有实现add()方法 * 转换出来的List与原始数组共享，所以修改原始数组将影响List的内容，要排除这个影响，可以自己<code>new ArrayList(Arrays.asList(array))</code>，这个解决方案同样适用于第二个问题。</p>
+<p>所以其实并不省多少事情，反而多了不少问题，日常工作中，建议还是使用guava的Lists工具类来实现，优雅直观，省出来的时候多陪陪老婆孩子。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2020/07/25/post/" rel="next" title="数值计算：你与首富的距离可能就差这“一点”">
+                  <i class="fa fa-chevron-left"></i> 数值计算：你与首富的距离可能就差这“一点”
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2020/08/09/post/" rel="prev" title="数据库索引：成也索引，败也索引（萧何：喵喵喵）上">
+                  数据库索引：成也索引，败也索引（萧何：喵喵喵）上 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+    
+    <div class="comments" id="comments"></div>
+  
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#知行合一探索arraylist和linkedlist"><span class="nav-number">1.</span> <span class="nav-text">知行合一，探索ArrayList和LinkedList</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#警惕sublist有可能带来oom"><span class="nav-number">2.</span> <span class="nav-text">警惕subList有可能带来OOM</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#慎用arrays.aslist"><span class="nav-number">3.</span> <span class="nav-text">慎用Arrays.asList()</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image"
+      src="/images/avatar.jpg"
+      alt="Funcas">
+  <p class="site-author-name" itemprop="name">Funcas</p>
+  <div class="site-description" itemprop="description">随缘更新，读书笔记、杂记、感想...</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories">
+          
+        
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/funcas" title="GitHub &rarr; https://github.com/funcas" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://weibo.com/funcasion" title="Weibo &rarr; https://weibo.com/funcasion" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Funcas</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">27k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">25 分钟</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//cdn.bootcss.com/animejs/3.1.0/anime.min.js"></script>
+  <script src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1/dist/Valine.min.js', () => {
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick';
+  guest = guest.split(',').filter(item => {
+    return GUEST.includes(item);
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'brfXUyPtevWzNxHVFTd1Ig5i-9Nh9j0Va',
+    appKey: 'LfGhuxD7dxTdWLukqWDBHmYc',
+    placeholder: '评论区',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false,
+    lang: 'zh-cn' || 'zh-cn',
+    path: location.pathname
+  });
+}, window.Valine);
+</script>
+
+</body>
+</html>
