@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="//cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":true},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="线程话题，一直都列于各门编程语言的高阶主题，一个是学习曲线陡峭，另一个是使用频率不会很高。特别是面向业务开发人员，可能一个项目都不会“主动地”使用几次，要有也就是异步写写日志啦，异步发送消息啦，加个Synchronized同步块等，高阶一点的，可能用一用ThreadLocal， ConcurrentHashMap，ConcurrentSkipListMap（也许还有些人没听过ConcurrentS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="面试造火箭之多线程（上）">
+<meta property="og:url" content="https://funcas.top/2020/08/22/post/index.html">
+<meta property="og:site_name" content="草堂笔记">
+<meta property="og:description" content="线程话题，一直都列于各门编程语言的高阶主题，一个是学习曲线陡峭，另一个是使用频率不会很高。特别是面向业务开发人员，可能一个项目都不会“主动地”使用几次，要有也就是异步写写日志啦，异步发送消息啦，加个Synchronized同步块等，高阶一点的，可能用一用ThreadLocal， ConcurrentHashMap，ConcurrentSkipListMap（也许还有些人没听过ConcurrentS">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://funcas.top/2020/08/22/post/15980657613289.jpg">
+<meta property="og:image" content="https://funcas.top/2020/08/22/post/%E6%9C%AA%E5%91%BD%E5%90%8D.png">
+<meta property="og:image" content="https://funcas.top/2020/08/22/post/2020-08-26//%E7%89%88%E9%9D%A2%202.png">
+<meta property="og:updated_time" content="2020-08-26T05:57:35.821Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="面试造火箭之多线程（上）">
+<meta name="twitter:description" content="线程话题，一直都列于各门编程语言的高阶主题，一个是学习曲线陡峭，另一个是使用频率不会很高。特别是面向业务开发人员，可能一个项目都不会“主动地”使用几次，要有也就是异步写写日志啦，异步发送消息啦，加个Synchronized同步块等，高阶一点的，可能用一用ThreadLocal， ConcurrentHashMap，ConcurrentSkipListMap（也许还有些人没听过ConcurrentS">
+<meta name="twitter:image" content="https://funcas.top/2020/08/22/post/15980657613289.jpg">
+  <link rel="canonical" href="https://funcas.top/2020/08/22/post/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>面试造火箭之多线程（上） | 草堂笔记</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c530a536ce02e21013b5b5170e12af3a";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+  <meta name="google-site-verification" content="yJU64JNdiWS_XdeDFFw_aSDOBzJwFVweNrT8PRfbU4Y" />
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">草堂笔记</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://funcas.top/2020/08/22/post/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Funcas">
+      <meta itemprop="description" content="随缘更新，读书笔记、杂记、感想...">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="草堂笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">面试造火箭之多线程（上）
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2020-08-22 11:38:41" itemprop="dateCreated datePublished" datetime="2020-08-22T11:38:41+08:00">2020-08-22</time>
+            </span>
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/08/22/post/#comments" itemprop="discussionUrl"><span class="post-comments-count valine-comment-count" data-xid="/2020/08/22/post/" itemprop="commentCount"></span></a>
+  </span>
+  
+  
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">本文字数：</span>
+              
+              <span>4.5k</span>
+            </span>
+          
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              
+              <span>4 分钟</span>
+            </span>
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>线程话题，一直都列于各门编程语言的高阶主题，一个是学习曲线陡峭，另一个是使用频率不会很高。特别是面向业务开发人员，可能一个项目都不会“主动地”使用几次，要有也就是异步写写日志啦，异步发送消息啦，加个Synchronized同步块等，高阶一点的，可能用一用ThreadLocal， ConcurrentHashMap，ConcurrentSkipListMap（也许还有些人没听过ConcurrentSkipListMap）。除非是搞中间件团队的，不然基本不会碰触到线程安全原语，像Lock和Condition，Semaphore等。下图简单罗列了一些较常见的知识点。（BTW:Java提供了非常丰富的并发容器和并发工具，遇事不决，优先查看下Java提供的这些工具能不能被我们使用，再考虑使用原语来解决，使用原语更多涉及到操作系统低层的一些原理性知识，使用不当很容易引发一些奇奇怪怪的问题。）</p><a id="more"></a>
+<p><img src="/2020/08/22/post/15980657613289.jpg"></p>
+<h2 id="进程与线程">进程与线程</h2>
+<blockquote>
+<p>“进程和线程的区别是什么？”</p>
+</blockquote>
+<p>近几年应该不太会出现这类型的沙雕面试题了吧，其实这问题说难不难，说简单也不简单，往往可能面试官自己可能都解释不清楚。而这种问题往往都是有标准教科书答案的回答。</p>
+<p>其实，进程和线程最大的区别在于，<strong>进程是资源拥有的基本单位，而线程则是系统调度的基本单位</strong>。操作系统内核的调度，本质是上对线程进行调度，而进程是给线程提供了虚拟内存、全局变量等资源。我们知道，线程其实是操作系统直接从进程中fork出来的，所以共享了进程中的虚拟内存、全局变量等这些资源。</p>
+<p>在这个前提下，我们再来设计上下文切换的问题 我们当今的操作系统都是多用户多任务的操作系统，正是因为这样，我们才能一边听着歌，一边愉快地撸代码。本质就是因为CPU运算速度很快，所以它把时间分片，在各个进程间进行调度执行，由于速度太快，就让你产生了，每个任务（进程）都是在独享CPU时间的错觉。（其实不止是人，程序也是这么觉得的，它连内存空间都是虚拟的！） 觉个例子，比较你去吃海底捞，这家海底捞有50桌，却只有一个超人服务员，这个服务员以光速在这50桌之间游荡，并接受每一桌提出的要求。根据人眼的视觉停留原理，只要一秒钟出现在你面前24次以上，你就会觉这个服务员从来没有离开过，并且还能满足你上菜、添水、加汤等需求。这里面，每一桌食客就是一个进程，这个超人服务员就是CPU。</p>
+<p>通过这个例子，我们再来看上下文切换这个问题，这个服务员从一桌离开，去服务另一桌的时候，就是一次上下文切换，那么切换的时候需要做哪些事情呢？至少要记录一下，当前的桌号、桌的上菜进度、提出哪些需求等。那么下一次回来这一桌的时候，就把这个记录翻出来看一下，然后继续处理接下来的事情。这就是CPU在进程间的切换。 还是这个例子，如果遇到某一桌人很多，每个人的需求都不一样，还特别多，有的要柠檬水，有的要红茶，有的要酸梅汁，有的要拿菜单加菜……于是服务员在这桌内还要做移动，但是她每次移动去满足某个人的需求时候，就不需要记录下来这桌的信息了，而是只要记录一下某个人的特殊需求信息即可。这时就是CPU在线程间的切换。 依然基于这个例子（保证是最后一次了），当服务员正在服务某一桌时，这会突然听到老板娘传唤，这时，服务员不得不放下当前服务的这桌人去处理老板娘那边的事情。这个时候，就是中断引起切换。</p>
+<p>所以，对于进程和线程，我们可以这么理解 ：</p>
+<ul>
+<li>当进程只有一个线程时，可以认为进程就等于线程；</li>
+<li>当进程拥有多个线程时，这些线程会共享相同的虚拟内存和全局变量等资源。这些资源在上下文切换时是不需要修改的；</li>
+<li>线程也有自己的私有数据，比如栈和寄存器等，这些在上下文切换时也是需要保存的。</li>
+</ul>
+<p>同样地，对于上下文切换，有三种情况：</p>
+<ul>
+<li>前后两个线程属于不同进程。此时，因为资源不共享，所以切换过程就跟进程上下文切换是一样；</li>
+<li>前后两个线程属于同一个进程。此时，因为虚拟内存是共享的，所以在切换时，虚拟内存这些资源就保持不动，只需要切换线程的私有数据、寄存器等这些不共享的数据；</li>
+<li>为了快速响应硬件事件，中断处理会打断进程的正常调度和执行，转而调用中断处理程序，响应设备事件。而在打断其他进程时，就需要将进程当前的状态保存下来，这样在中断结束后，进程仍然可以从原来的状态恢复运行。</li>
+</ul>
+<p>对于第三种情况，属于操作系统层级的，这里暂时不进行讨论。所以，<strong>虽然同为上下文切换，但同进程内的线程切换，要比多进程间的切换消耗更少的资源</strong>，这也正是多线程代替多进程的一个优势。不过，这里有个反例，Nginx的设计其实还是多进程的，想想为什么？这个问题就留给聪明的你来解答吧。</p>
+<h2 id="线程生命周期">线程生命周期</h2>
+<p>一般地，线程的生命周期可分为五个状态：初始状态、可运行状态、运行状态、休眠状态和终止状态。 <img src="/2020/08/22/post/%E6%9C%AA%E5%91%BD%E5%90%8D.png" alt="未命名"></p>
+<ul>
+<li>初始状态：线程已经被创建，但是还不允许分配 CPU 执行。这个状态属于编程语言特有的，不过这里的被创建，仅仅是在编程语言层面被创建，而在操作系统层面，真正的线程还没有创建。</li>
+<li>可运行状态：线程可以分配 CPU 执行。在这种状态下，真正的操作系统线程已经被成功创建了，所以可以分配 CPU 执行。这时候仅仅是就绪状态，也就是进入了就绪队列，等待CPU调度。</li>
+<li>运行状态：这个比较好理解，当有空闲的 CPU 时，操作系统会将其分配给一个处于可运行状态的线程，被分配到 CPU 的线程的状态就转换成了运行状态。</li>
+<li>休眠状态：运行状态的线程如果调用一个阻塞的 API（例如以阻塞方式读文件，阻塞的网络IO等）或者等待某个事件（例如条件变量），那么线程的状态就会转换到休眠状态，同时释放 CPU 使用权，休眠状态的线程永远没有机会获得 CPU 使用权。当唤醒事件出现了或条件满足了，线程就会从休眠状态转换到可运行状态。</li>
+<li>终止状态：线程执行完或者出现异常就会进入终止状态，终止状态的线程不会切换到其他任何状态，进入终止状态也就意味着线程的生命周期结束了。</li>
+</ul>
+<p>上述这个过程为通用的线程生命周期，它是站在操作系统层面来定义的。而对于不同的编程语言，会对这些状态做一些省略与细化。对于Java，JVM把可运行状态和运行状态合并了。因为JVM 把线程调度交给操作系统处理了，它并不关心这两个状态。</p>
+<h3 id="java的线程生命周期">Java的线程生命周期</h3>
+<p>Java将线程生命周期定义为六种状态：NEW，RUNNABLE，BLOCKED，WAITING，TIMED_WAITING，TERMINATED。 <img src="2020-08-26//%E7%89%88%E9%9D%A2%202.png" alt="版面 2"></p>
+<p>其中，BLOCKED、WAITING、TIMED_WAITING 这三个状态是一种状态，就是休眠态，只要线程处于这三种状态之一，那么这个线程就永远没有 CPU 的使用权。而对于这三种状态，可以理解为线程休眠的三种原因：阻塞等待、无超时等待、有超时时限等待。</p>
+<p>接下来我们来着重看一下这几种状态是如何转换的：</p>
+<ul>
+<li><p>RUNNABLE与BOLCK的转换 只有一种场景会触发这种转换，就是线程等待 synchronized 的隐式锁。当线程获取不到synchronized锁的时候，就会进入BLOCK状态；尔后，当它获取到锁时，就会从BLOCK状态切换回RUNNABLE状态。注意和阻塞API不要混在一起，调用了阻塞式API的时候，是操作系统层面的阻塞，而不是Java线程的状态。</p></li>
+<li><p>RUNNABLE 与 WAITING 的状态转换 有三种场景会触发RUNNABLE 与 WAITING 的状态转换：</p>
+<ul>
+<li>获得 synchronized 隐式锁的线程，调用无参数的 wait() 方法</li>
+<li>调用无参数的 Thread.join() 方法</li>
+<li>调用 LockSupport.park() 方法</li>
+</ul></li>
+<li><p>RUNNABLE 与 TIMED_WAITING 的状态转换 有五种场景会触发RUNNABLE 与 TIMED_WAITING 的状态转换</p>
+<ul>
+<li>调用 Thread.sleep(long millis) 方法</li>
+<li>调用带超时参数的 wait(long timeout) 方法</li>
+<li>调用带超时参数的 Thread.join(long millis) 方法</li>
+<li>调用带超时参数的 LockSupport.parkNanos(Object blocker, long deadline) 方法</li>
+<li>调用带超时参数的 LockSupport.parkUntil(long deadline) 方法</li>
+</ul></li>
+<li><p>从 NEW 到 RUNNABLE 状态 只要调用线程对象的 start() 方法就可以了</p></li>
+<li><p>从 RUNNABLE 到 TERMINATED 状态 当线程正常执行成功后退出，或异常被抛出后线程终止时，就会进入TERMINATED。 当然，你还可以使用Thread类里面的stop() 方法，进行无差别停止线程，可以理解成kill -9了，所以被标记为Deprecated，正确的姿势应该是调用 interrupt() 方法，这是后话了。</p></li>
+</ul>
+<h2 id="线程多就一定快吗">线程多就一定快吗</h2>
+<p>使用多线程的目的就是为了提升性能，更大程度地利用CPU资源。譬如，准备导入一个特别大的excel数据到数据库中，如果使用单线程处理，那就只能读一批次，处理一批次，前一批次没有算是完前，下一批次是不会处理的。这就白白浪费了CPU资源，所以我们考虑使用多个线程，每个线程处理一个批次，这样就相当于多个批次同时在进行工作，可以更大程度地使用CPU资源。 可是，要建多少个线程比较合适呢，越多越好吗？ 通过上文的分析，我们知道，线程数量过多，会造成上下文切换频繁，而每次切换都需要一定的成本，虽然在几十纳秒到几毫秒之间，但是累积起来的数量就变得很大，这时候，大部分CPU的资源都消耗在了上下文切换上了，从而也就降低了业务处理能力。</p>
+<p>那么，创建多少线程才合适呢？</p>
+<p>对于计算密集型场景，多线程的本质就是提升CPU的使用率，比如一个4核心CPU, 那么每个核心一个线程，理论上，4线程是一个最优状态，再多会发生上下文切换成本了。所以，网上流行的一个经验公式是：线程数 = CPU核心数 + 1，加1的目的是为了如内存缺页或其它原因导致线程阻塞时，多出来的这个线程可以补上，以提升CPU使用率。</p>
+<p>对于I/O密集型场景呢，我们先举个例子，假设某个场景，计算和I/O比例差不多为1：1，如果现在是单线程运行的话，那就是执行 CPU 计算的时候，I/O 设备空闲；执行 I/O 操作的时候，CPU 空闲，所以 CPU 的利用率和 I/O 设备的利用率都是 50%。这时候，我们如果用两个线程来跑，当线程 A 执行 CPU 计算的时候，线程 B 执行 I/O 操作；当线程 A 执行 I/O 操作的时候，线程 B 执行 CPU 计算，这样 CPU 的利用率和 I/O 设备的利用率就都达到了 100%。于是，这个时候系统的整体吞吐量也就提升了一倍。</p>
+<p>那么如果现在是比例是1:2，1:3……呢？有没有发现这玩意其实跟CPU的时间分片算法是一个道理的。大家可以自己画个时序图来推演一下就很明显了，这里给出最终的结论：</p>
+<blockquote>
+<p>线程数 = (I/O耗时 ÷ 计算耗时) + 1</p>
+</blockquote>
+<p>这个是单核心的情况，如果CPU有多个核心，那么就得出如下公式：</p>
+<blockquote>
+<p>线程数 = CPU核心数 * [(I/O耗时 ÷ 计算耗时)+ 1]</p>
+</blockquote>
+<p>所以对于网上有些万能公式如: <code>2 * CPU核心数 + 1</code>， 其实是不严谨的。至于上述公式中的I/O耗时和CPU计算耗时的比值怎么得到，这个目前只能是去压测，然后根据压测数据来进行推算。如果有条件的话可以使用APM工具，运行一段时间后从APM监控工具上得到的统计数据来进行调整。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2020/08/16/post/" rel="next" title="数据库索引：成也索引，败也索引（萧何：喵喵喵）下">
+                  <i class="fa fa-chevron-left"></i> 数据库索引：成也索引，败也索引（萧何：喵喵喵）下
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+    
+    <div class="comments" id="comments"></div>
+  
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#进程与线程"><span class="nav-number">1.</span> <span class="nav-text">进程与线程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#线程生命周期"><span class="nav-number">2.</span> <span class="nav-text">线程生命周期</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#java的线程生命周期"><span class="nav-number">2.1.</span> <span class="nav-text">Java的线程生命周期</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#线程多就一定快吗"><span class="nav-number">3.</span> <span class="nav-text">线程多就一定快吗</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image"
+      src="/images/avatar.jpg"
+      alt="Funcas">
+  <p class="site-author-name" itemprop="name">Funcas</p>
+  <div class="site-description" itemprop="description">随缘更新，读书笔记、杂记、感想...</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories">
+          
+        
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/funcas" title="GitHub &rarr; https://github.com/funcas" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://weibo.com/funcasion" title="Weibo &rarr; https://weibo.com/funcasion" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Funcas</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">31k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">29 分钟</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//cdn.bootcss.com/animejs/3.1.0/anime.min.js"></script>
+  <script src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1/dist/Valine.min.js', () => {
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick';
+  guest = guest.split(',').filter(item => {
+    return GUEST.includes(item);
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'brfXUyPtevWzNxHVFTd1Ig5i-9Nh9j0Va',
+    appKey: 'LfGhuxD7dxTdWLukqWDBHmYc',
+    placeholder: '评论区',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false,
+    lang: 'zh-cn' || 'zh-cn',
+    path: location.pathname
+  });
+}, window.Valine);
+</script>
+
+</body>
+</html>
