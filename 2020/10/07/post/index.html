@@ -58,22 +58,22 @@
   <meta name="description" content="在那个C/C++横行的年代里，Java推出的一大卖点就是：自动内存管理。虚拟机自动帮你分配和回收对象，彻底将开发者在手工管理内存的繁重工作中解放出来。当然，最后被一直诟病的也是它，因为是自动档了，灵活性和高效性肯定有所散失，像以前手动档时可以“排水道过弯”的这种骚操作是没办法使用了，并且还带来了不少与垃圾回收的新的问题。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="手撕Java虚拟机（二）">
-<meta property="og:url" content="https://funcas.top/2020/10/07/post/index.html">
+<meta property="og:url" content="https://funcas.github.io/2020/10/07/post/index.html">
 <meta property="og:site_name" content="草堂笔记">
 <meta property="og:description" content="在那个C/C++横行的年代里，Java推出的一大卖点就是：自动内存管理。虚拟机自动帮你分配和回收对象，彻底将开发者在手工管理内存的繁重工作中解放出来。当然，最后被一直诟病的也是它，因为是自动档了，灵活性和高效性肯定有所散失，像以前手动档时可以“排水道过弯”的这种骚操作是没办法使用了，并且还带来了不少与垃圾回收的新的问题。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/bd25aee5-6c8d-4603-9ef6-5c28d38fd16a.jpeg">
-<meta property="og:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/ref.png">
-<meta property="og:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/mark-sweep.png">
-<meta property="og:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/copy.png">
-<meta property="og:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/compact.png">
-<meta property="og:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/gen.png">
+<meta property="og:image" content="https://funcas.github.io/2020/10/07/post/media/16020381515851/bd25aee5-6c8d-4603-9ef6-5c28d38fd16a.jpeg">
+<meta property="og:image" content="https://funcas.github.io/2020/10/07/post/media/16020381515851/ref.png">
+<meta property="og:image" content="https://funcas.github.io/2020/10/07/post/media/16020381515851/mark-sweep.png">
+<meta property="og:image" content="https://funcas.github.io/2020/10/07/post/media/16020381515851/copy.png">
+<meta property="og:image" content="https://funcas.github.io/2020/10/07/post/media/16020381515851/compact.png">
+<meta property="og:image" content="https://funcas.github.io/2020/10/07/post/media/16020381515851/gen.png">
 <meta property="og:updated_time" content="2021-08-08T11:49:45.646Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="手撕Java虚拟机（二）">
 <meta name="twitter:description" content="在那个C/C++横行的年代里，Java推出的一大卖点就是：自动内存管理。虚拟机自动帮你分配和回收对象，彻底将开发者在手工管理内存的繁重工作中解放出来。当然，最后被一直诟病的也是它，因为是自动档了，灵活性和高效性肯定有所散失，像以前手动档时可以“排水道过弯”的这种骚操作是没办法使用了，并且还带来了不少与垃圾回收的新的问题。">
-<meta name="twitter:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/bd25aee5-6c8d-4603-9ef6-5c28d38fd16a.jpeg">
-  <link rel="canonical" href="https://funcas.top/2020/10/07/post/">
+<meta name="twitter:image" content="https://funcas.github.io/2020/10/07/post/media/16020381515851/bd25aee5-6c8d-4603-9ef6-5c28d38fd16a.jpeg">
+  <link rel="canonical" href="https://funcas.github.io/2020/10/07/post/">
 
 
 <script id="page-configurations">
@@ -223,7 +223,7 @@
   
   
   <div class="post-block post">
-    <link itemprop="mainEntityOfPage" href="https://funcas.top/2020/10/07/post/">
+    <link itemprop="mainEntityOfPage" href="https://funcas.github.io/2020/10/07/post/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Funcas">

@@ -58,23 +58,23 @@
   <meta name="description" content="通过前面的介绍，我们知道了，查询数据的时候，即可以直接在主键索引上进行全表扫描，也可以走非主键索引，扫描后再到主键索引上回表查出最终数据。那么数据库是怎么确定要走哪种方案呢，在日常使用中，是不是也经常被MySQL误走索引而坑过呢。首先我们先准备一个测试数据吧。我们先建一张简单的表，表里有id, x, y三个字段，并给x和y添加索引">
 <meta property="og:type" content="article">
 <meta property="og:title" content="数据库索引：成也索引，败也索引（萧何：喵喵喵）下">
-<meta property="og:url" content="https://funcas.top/2020/08/16/post/index.html">
+<meta property="og:url" content="https://funcas.github.io/2020/08/16/post/index.html">
 <meta property="og:site_name" content="草堂笔记">
 <meta property="og:description" content="通过前面的介绍，我们知道了，查询数据的时候，即可以直接在主键索引上进行全表扫描，也可以走非主键索引，扫描后再到主键索引上回表查出最终数据。那么数据库是怎么确定要走哪种方案呢，在日常使用中，是不是也经常被MySQL误走索引而坑过呢。首先我们先准备一个测试数据吧。我们先建一张简单的表，表里有id, x, y三个字段，并给x和y添加索引">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974856545859.jpg">
-<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974857899477.jpg">
-<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974858891601.jpg">
-<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974860154226.jpg">
-<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974908497102.jpg">
-<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974918728648.jpg">
-<meta property="og:image" content="https://funcas.top/2020/08/16/post/15974921218546.jpg">
+<meta property="og:image" content="https://funcas.github.io/2020/08/16/post/15974856545859.jpg">
+<meta property="og:image" content="https://funcas.github.io/2020/08/16/post/15974857899477.jpg">
+<meta property="og:image" content="https://funcas.github.io/2020/08/16/post/15974858891601.jpg">
+<meta property="og:image" content="https://funcas.github.io/2020/08/16/post/15974860154226.jpg">
+<meta property="og:image" content="https://funcas.github.io/2020/08/16/post/15974908497102.jpg">
+<meta property="og:image" content="https://funcas.github.io/2020/08/16/post/15974918728648.jpg">
+<meta property="og:image" content="https://funcas.github.io/2020/08/16/post/15974921218546.jpg">
 <meta property="og:updated_time" content="2020-08-16T03:43:55.730Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="数据库索引：成也索引，败也索引（萧何：喵喵喵）下">
 <meta name="twitter:description" content="通过前面的介绍，我们知道了，查询数据的时候，即可以直接在主键索引上进行全表扫描，也可以走非主键索引，扫描后再到主键索引上回表查出最终数据。那么数据库是怎么确定要走哪种方案呢，在日常使用中，是不是也经常被MySQL误走索引而坑过呢。首先我们先准备一个测试数据吧。我们先建一张简单的表，表里有id, x, y三个字段，并给x和y添加索引">
-<meta name="twitter:image" content="https://funcas.top/2020/08/16/post/15974856545859.jpg">
-  <link rel="canonical" href="https://funcas.top/2020/08/16/post/">
+<meta name="twitter:image" content="https://funcas.github.io/2020/08/16/post/15974856545859.jpg">
+  <link rel="canonical" href="https://funcas.github.io/2020/08/16/post/">
 
 
 <script id="page-configurations">
@@ -224,7 +224,7 @@
   
   
   <div class="post-block post">
-    <link itemprop="mainEntityOfPage" href="https://funcas.top/2020/08/16/post/">
+    <link itemprop="mainEntityOfPage" href="https://funcas.github.io/2020/08/16/post/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Funcas">

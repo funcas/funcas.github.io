@@ -58,21 +58,21 @@
   <meta name="description" content="说起“手撕Java虚拟机”，之前陆陆续续见过好多软文、出版物的书名都是这个，然后翻看一下，发现基本都是标题党，无非把Jvm规范翻译一遍，还有更过份的就直接抄袭《深入理解Java虚拟机》这本书的内容了。所以看起来，这个年代手撕的门槛也忒低了点，那么跟个风，也“手撕”一波。0x00 起源当年在大学学C语言的时候，老师说他们当年写程序的时候，不像现在这么幸福。他们写程序是在卡片或纸带上打孔，1打洞，0不">
 <meta property="og:type" content="article">
 <meta property="og:title" content="手撕Java虚拟机 （一）">
-<meta property="og:url" content="https://funcas.top/2020/09/20/post/index.html">
+<meta property="og:url" content="https://funcas.github.io/2020/09/20/post/index.html">
 <meta property="og:site_name" content="草堂笔记">
 <meta property="og:description" content="说起“手撕Java虚拟机”，之前陆陆续续见过好多软文、出版物的书名都是这个，然后翻看一下，发现基本都是标题党，无非把Jvm规范翻译一遍，还有更过份的就直接抄袭《深入理解Java虚拟机》这本书的内容了。所以看起来，这个年代手撕的门槛也忒低了点，那么跟个风，也“手撕”一波。0x00 起源当年在大学学C语言的时候，老师说他们当年写程序的时候，不像现在这么幸福。他们写程序是在卡片或纸带上打孔，1打洞，0不">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="https://funcas.top/2020/09/20/post/media/16005692661410/16005924683678.jpg">
-<meta property="og:image" content="https://funcas.top/2020/09/20/post/media/16005692661410/16005784341093.jpg">
-<meta property="og:image" content="https://funcas.top/2020/09/20/post/media/16005692661410/16005796063470.jpg">
-<meta property="og:image" content="https://funcas.top/2020/09/20/post/media/16005692661410/16005803676980.jpg">
-<meta property="og:image" content="https://funcas.top/2020/09/20/post/media/16005692661410/16005831855783.jpg">
+<meta property="og:image" content="https://funcas.github.io/2020/09/20/post/media/16005692661410/16005924683678.jpg">
+<meta property="og:image" content="https://funcas.github.io/2020/09/20/post/media/16005692661410/16005784341093.jpg">
+<meta property="og:image" content="https://funcas.github.io/2020/09/20/post/media/16005692661410/16005796063470.jpg">
+<meta property="og:image" content="https://funcas.github.io/2020/09/20/post/media/16005692661410/16005803676980.jpg">
+<meta property="og:image" content="https://funcas.github.io/2020/09/20/post/media/16005692661410/16005831855783.jpg">
 <meta property="og:updated_time" content="2021-08-08T11:46:01.411Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="手撕Java虚拟机 （一）">
 <meta name="twitter:description" content="说起“手撕Java虚拟机”，之前陆陆续续见过好多软文、出版物的书名都是这个，然后翻看一下，发现基本都是标题党，无非把Jvm规范翻译一遍，还有更过份的就直接抄袭《深入理解Java虚拟机》这本书的内容了。所以看起来，这个年代手撕的门槛也忒低了点，那么跟个风，也“手撕”一波。0x00 起源当年在大学学C语言的时候，老师说他们当年写程序的时候，不像现在这么幸福。他们写程序是在卡片或纸带上打孔，1打洞，0不">
-<meta name="twitter:image" content="https://funcas.top/2020/09/20/post/media/16005692661410/16005924683678.jpg">
-  <link rel="canonical" href="https://funcas.top/2020/09/20/post/">
+<meta name="twitter:image" content="https://funcas.github.io/2020/09/20/post/media/16005692661410/16005924683678.jpg">
+  <link rel="canonical" href="https://funcas.github.io/2020/09/20/post/">
 
 
 <script id="page-configurations">
@@ -222,7 +222,7 @@
   
   
   <div class="post-block post">
-    <link itemprop="mainEntityOfPage" href="https://funcas.top/2020/09/20/post/">
+    <link itemprop="mainEntityOfPage" href="https://funcas.github.io/2020/09/20/post/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Funcas">
