@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="//cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":true},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="多线程程序设计之所以让人感觉头疼，并不是因为语法或API有多困难，而是多线程出问题一般都比较隐蔽、偶发、不易重现，加上调试有一定的困难。总结起来，从使用层面上看就是：没有共享就没有伤害；而从根源上看就是：可见性、原子性和有序性这三个问题。可见性问题首先，我们来看一个非常简单的例子123456789101112131415161718192021222324private CountDownLatc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="面试造火箭之多线程（下）">
+<meta property="og:url" content="https://funcas.top/2020/09/06/post/index.html">
+<meta property="og:site_name" content="草堂笔记">
+<meta property="og:description" content="多线程程序设计之所以让人感觉头疼，并不是因为语法或API有多困难，而是多线程出问题一般都比较隐蔽、偶发、不易重现，加上调试有一定的困难。总结起来，从使用层面上看就是：没有共享就没有伤害；而从根源上看就是：可见性、原子性和有序性这三个问题。可见性问题首先，我们来看一个非常简单的例子123456789101112131415161718192021222324private CountDownLatc">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://funcas.top/2020/09/06/post/media/15992841766744/15992914894338.jpg">
+<meta property="og:image" content="https://funcas.top/2020/09/06/post/media/15992841766744/15992916921271.jpg">
+<meta property="og:image" content="https://funcas.top/2020/09/06/post/media/15992841766744/15992939286090.jpg">
+<meta property="og:updated_time" content="2021-08-08T11:43:19.648Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="面试造火箭之多线程（下）">
+<meta name="twitter:description" content="多线程程序设计之所以让人感觉头疼，并不是因为语法或API有多困难，而是多线程出问题一般都比较隐蔽、偶发、不易重现，加上调试有一定的困难。总结起来，从使用层面上看就是：没有共享就没有伤害；而从根源上看就是：可见性、原子性和有序性这三个问题。可见性问题首先，我们来看一个非常简单的例子123456789101112131415161718192021222324private CountDownLatc">
+<meta name="twitter:image" content="https://funcas.top/2020/09/06/post/media/15992841766744/15992914894338.jpg">
+  <link rel="canonical" href="https://funcas.top/2020/09/06/post/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>面试造火箭之多线程（下） | 草堂笔记</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c530a536ce02e21013b5b5170e12af3a";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+  <meta name="google-site-verification" content="yJU64JNdiWS_XdeDFFw_aSDOBzJwFVweNrT8PRfbU4Y" />
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">草堂笔记</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://funcas.top/2020/09/06/post/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Funcas">
+      <meta itemprop="description" content="随缘更新，读书笔记、杂记、感想...">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="草堂笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">面试造火箭之多线程（下）
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2020-09-06 19:38:38" itemprop="dateCreated datePublished" datetime="2020-09-06T19:38:38+08:00">2020-09-06</time>
+            </span>
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/09/06/post/#comments" itemprop="discussionUrl"><span class="post-comments-count valine-comment-count" data-xid="/2020/09/06/post/" itemprop="commentCount"></span></a>
+  </span>
+  
+  
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">本文字数：</span>
+              
+              <span>6.4k</span>
+            </span>
+          
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              
+              <span>6 分钟</span>
+            </span>
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>多线程程序设计之所以让人感觉头疼，并不是因为语法或API有多困难，而是多线程出问题一般都比较隐蔽、偶发、不易重现，加上调试有一定的困难。总结起来，从使用层面上看就是：没有共享就没有伤害；而从根源上看就是：可见性、原子性和有序性这三个问题。</p><h2 id="可见性问题">可见性问题</h2><p>首先，我们来看一个非常简单的例子</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> CountDownLatch countDownLatch = <span class="keyword">new</span> CountDownLatch(<span class="number">1</span>);</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">int</span> count = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">calc</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        countDownLatch.await();</span><br><span class="line">    &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100_000_000L</span>; i++) &#123;</span><br><span class="line">        count++;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doCalc</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">    Thread t1 = <span class="keyword">new</span> Thread(<span class="keyword">this</span>::calc);</span><br><span class="line">    Thread t2 = <span class="keyword">new</span> Thread(<span class="keyword">this</span>::calc);</span><br><span class="line">    t1.start();</span><br><span class="line">    t2.start();</span><br><span class="line">    countDownLatch.countDown();</span><br><span class="line">    t1.join();</span><br><span class="line">    t2.join();</span><br><span class="line">    System.out.println(count);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><a id="more"></a>
+
+
+
+<p>程序很简单，创建两个线程，同时对count变量进行累加。直觉告诉我们，结果应该等于2亿。可事实是：结果会在1亿的左右徘徊。</p>
+<p>为了与下文对比，我们使用虚拟机来运行，并限制不同的CPU数量下图是双核CPU的运行结果。 <img src="/2020/09/06/post/media/15992841766744/15992914894338.jpg"></p>
+<p>然后我们把虚拟机的CPU资源限制为单核，运行结果如下： <img src="/2020/09/06/post/media/15992841766744/15992916921271.jpg"></p>
+<p>发现在单核心的虚机上，不管运行多少次，其结果都是符合预期的。</p>
+<p>同样的程序，在不同的硬件条件下的表现不一样。这大概是硬件工程师给我们挖出来最大的“坑”了吧。</p>
+<p>这其实就是可见性问题。在单核心CPU时代，线程都在一个CPU核心上执行，对应的缓存也只有一块，那么一致性问题就不存在了，因为所有线程都共享内一个CPU缓存，一个线程对缓存的写对另外一个线程来说一定是可见的。</p>
+<p>但是随着硬件的发展，到了多核心CPU的时代，情况就变了，每个CPU核心都有着自己的缓存，当多个线程在不同的CPU核心上执行时，这些线程操作的是不同CPU核心对应的缓存，那么这时候就会出现缓存不一致的问题。比如A线程操作的是CPU#1上的缓存，做了一个写入操作，那么这瞬间对于执行在CPU#2上的线程B来说，是不知道的，因为缓存是独立的。而这就是所谓的可见性问题。 <strong>一个线程对共享变量的修改，另外一个线程能够立刻看到，我们称为可见性。</strong></p>
+<p>在上面的例子中，线程1和线程2同时运行，并且都把count=0分别读入自己的缓存中。执行完+1操作后，各自缓存里的数据都是1。这时候再回写回内存的时候，就会变成1而不是我们预期的2。由于两个线程都基于各自的缓存的count值进行计算，并且互相不可见，所以最终导致了结果的偏差。</p>
+<h2 id="原子性问题">原子性问题</h2>
+<p>在上一篇介绍过，为了协调IO与CPU速度差异，CPU采用了时间片的方式在进程间调度。而实际上，CPU的一个指令周期包括：取指（IF），译码（ID），执行（EX)，访存（MEM），写回（WB）这五个步骤。也就是说，执行一条指令是需要多个时针周期才能完成。所以为了提高CPU的利用率，CPU采用了面向流水线的指令设计，类似下图这样，指令交叉错开，以使在一个CPU时钟周期内可以同时运行不同的指令阶段。一般现在的CPU都在11~14级左右（除了奔4，这玩意好像有20级），这就意味着，一个时钟周期内，可以同时运行11个不同的指令阶段。这属于计算机组成原理范畴，这里不再展开。 <img src="/2020/09/06/post/media/15992841766744/15992939286090.jpg"></p>
+<p>利益于这种架构，我们才能一边听着歌，一边愉快地撸bug。但是也给我们带来了麻烦。我们知道，任务切换的时机大多数是在时间片结束的时候，而我们现在基本都使用高级语言编程，高级语言里一条语句往往需要多条 CPU 指令完成，千万记住，<strong>高级语言里的语句不是原子的</strong>。 例如上面代码中的count++，我们来查看下生成的字节码看看，count++会做哪些操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">public void calc();</span><br><span class="line">    // 中间省略无数指令...</span><br><span class="line">    28: getfield      #5                  // 获取count的值，#5是count的引用代号</span><br><span class="line">    31: iconst_1                          // 1(int)值入栈</span><br><span class="line">    32: iadd                              // 加法指令</span><br><span class="line">    33: putfield      #5                  // 回写count值</span><br><span class="line">    36: iinc          1, 1</span><br><span class="line">    39: goto          17</span><br><span class="line">    42: return</span><br></pre></td></tr></table></figure>
+<p>从28~33就是对count++这条语句，jvm要执行的指令。（其实这里只是为了分析，举一个直观的例子而已，严格来说，一条字节码指令也不完全是原子的。java打印出来的汇编代码实在是……在多了，就拿字节码做个形象比喻就好了）从这里我们可以看出来，一条语句，至少要三个CPU指令 - 把变量从内存加载进寄存器 - 在寄存器中执行加法 - 将结果回写回内存</p>
+<p>所以，问题就在这里了，CPU的调度是以CPU指令为原子而不是以语句，换名话说，CPU的切换，可以发生在任何一条CPU指令执行完成时。那么，假设线程1执行了加载count=0这个CPU指令，发生了切换，线程2进来了，并且执行完成了；这时候，线程1被唤醒，继续执行，但它并不知道这时候内存中的count值已经是1了，于是再把1覆盖回了内存。于是，执行了两次加法操作，但结果却只有1。</p>
+<p>记住，CPU 能保证的原子操作是 CPU 指令级别的，而不是高级语言的操作符，这是违背我们直觉的地方。因此，在必要的时候，我们需要在高级语言层面保证操作的原子性。</p>
+<h2 id="指令重排序带来的有序性问题">指令重排序带来的有序性问题</h2>
+<p>指令重排序其实是机器级别的优化，从上文我们知道了CPU的流水线式执行指令，有时候为了流水线对齐，CPU会做一定的乱顺，来保证CPU的使用率。当然，这种乱序是有规则的，如前后有依赖关系的是不会被乱序执行的。但比如像<code>a = 1; b = 2</code>这种前后无依赖关系的，CPU是可以“自作主张”地乱序执行。</p>
+<p>举一个比较经典的例子吧。Java里面的单例——双重检查创建单例对象。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span> </span>&#123; </span><br><span class="line">    <span class="keyword">static</span> Singleton instance; </span><br><span class="line">    <span class="function"><span class="keyword">static</span> Singleton <span class="title">getInstance</span><span class="params">()</span></span>&#123; </span><br><span class="line">        <span class="keyword">if</span> (instance == <span class="keyword">null</span>) &#123; </span><br><span class="line">            <span class="keyword">synchronized</span>(Singleton.class) &#123; </span><br><span class="line">                <span class="keyword">if</span> (instance == <span class="keyword">null</span>) </span><br><span class="line">                    instance = <span class="keyword">new</span> Singleton(); </span><br><span class="line">                &#125; </span><br><span class="line">            &#125; </span><br><span class="line">        <span class="keyword">return</span> instance; </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>假设有两个线程 A、B 同时调用 getInstance() 方法，他们会同时发现 instance == null ，于是同时对 Singleton.class 加锁，此时 JVM 保证只有一个线程能够加锁成功（假设是线程 A），另外一个线程则会处于等待状态（假设是线程 B）；线程 A 会创建一个 Singleton 实例，之后释放锁，锁释放后，线程 B 被唤醒，线程 B 再次尝试加锁，此时是可以加锁成功的，加锁成功后，线程 B 检查 instance == null 时会发现，已经创建过 Singleton 实例了，就直接返回了。</p>
+<p>可是，我们被CPU狠狠地摆了一道。我们想象中的new操作过程：</p>
+<ul>
+<li>分配一块内存 S</li>
+<li>在 S 上初始化Singleton对象</li>
+<li>将 S 的地址赋值给instance</li>
+</ul>
+<p>但是，被优化过，有可能是这么操作的：</p>
+<ul>
+<li>分配一块内存 S</li>
+<li>将 S 的地址赋值给instance</li>
+<li>在 S 上初始化Singleton对象</li>
+</ul>
+<p>那么应用到我们上述的代码中去，假设线程 A 先执行 getInstance() 方法，当执行完指令 2 时恰好发生了线程切换，切换到了线程 B 上；如果此时线程 B 也执行 getInstance() 方法，那么线程 B 在执行第一个判断时会发现 instance 非空 ，所以直接返回 instance，而此时的 instance 是未初始化过的，如果我们这个时候访问 instance 的成员变量就触发NullPointException。</p>
+<h2 id="volatile-登场">volatile 登场</h2>
+<p>volatile 关键字并不是 Java 语言所特有，早在C里面就有，它最原始的语义就是禁用 CPU 缓存。</p>
+<p>那么，假设我们有这么一条语句：</p>
+<blockquote>
+<p>volatile int a = 0;</p>
+</blockquote>
+<p>它想表达的意思是：1， 禁止对该语句做重排优化。2，对于这个变量的读写，禁止使用缓存，直接从内存读取；</p>
+<p>关于第1点，比较容易理解，我们通过</p>
+<blockquote>
+<p>java -XX:+UnlockDiagnosticVMOptions -XX:+PrintAssembly TestVolatile &gt; a.txt</p>
+</blockquote>
+<p>打印出汇编指令后，可以发现这么一行指令：</p>
+<blockquote>
+<p>0x000000011c6c92f8: lock addl $0x0,(%rsp)</p>
+</blockquote>
+<p>这个操作相当于是一个内存屏障，指令重排时，不能把后面的指令重排到内存屏障之前的位置。这个在单处理器时是不需要的，但是当多个处理器同时访问同一块内存，且其中一个在观测另一个时，那么就需要内存屏障来保证一致性。</p>
+<p>所以关上上面单例的问题，就可以使用这个关键字来解决。</p>
+<p>第2点，我们先举个例子</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> a = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">volatile</span> <span class="keyword">boolean</span> b = <span class="keyword">false</span>; </span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">writer</span><span class="params">()</span> </span>&#123; </span><br><span class="line">    a = <span class="number">42</span>; </span><br><span class="line">    b = <span class="keyword">true</span>; </span><br><span class="line">&#125; </span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">reader</span><span class="params">()</span> </span>&#123; </span><br><span class="line">    <span class="keyword">if</span> (b == <span class="keyword">true</span>) &#123;</span><br><span class="line">        <span class="comment">// 这里a会是多少呢？ </span></span><br><span class="line">        System.out.println(a);</span><br><span class="line">    &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>假设线程 A 执行 writer() 方法，按照 volatile 规则，会把变量 “b=true” 写入内存；假设线程 B 执行 reader() 方法，按照 volatile 语义，线程 B 会从内存中重新读取变量 b，如果线程 B 看到 “b == true” 时，那么线程 B 看到的 a 是多少呢？</p>
+<h2 id="happens-before-规则">Happens-Before 规则</h2>
+<p>为了解决上面的疑问，我们的Happens-Before 规则登场了。这个属于JVM规范的定义，相信大家都听过，但是通过英语译过来，总觉得怪怪的，“先行发生”，完全无法抓到它想要表达什么。所以抛开英语的翻译，其实这玩意的意思就是定义<strong>前面一个操作的结果对后续操作是可见的</strong>，有点量子纠缠的味道，不管距离多少，一个向上，另一个必然向下。而Happens-Before 规则就是在定义这种纠缠。 Happens-Before是Java内存模型中定义的两项操作之间的偏序关系，比如，操作A Happens-Before 操作 B，其实就是说在发生操作 B 之前，操作 A 产生的影响对 操作 B 可见，亦即能被 B 观察到。这里的影响包括：修改了内存中共享变量的值、调用了方法、发送了消息等。</p>
+<p>可以发现，这个原则是用来判断数据是否存在竞争、线程是否安全的重要手段，依据这几个规则，我们可以解决并发环境下两个操作是否可能存在冲突的所有问题，而不需要关注Java内存模型这种底层的纠缠之中。</p>
+<p>下面是一些Java内存模型下“自带的”Happens-Before，这些情况下无须任何同步器协调就可以保障执行顺序；如果两个操作之间的关系不在此列，或无法从这些规则中推导出来的，那么它们就没有顺序性保障，虚拟机有权限对它们进行重排序。</p>
+<h3 id="规则一-程序次序规则-program-order-rule">规则一 程序次序规则 （Program Order Rule）</h3>
+<p>在一个线程内，按照控制流顺序，书写在前面的操作先行发生于书写在后面的操作。注意，这里说的是控制流顺序而不是程序代码顺序。这里需要考虑如条件分支、循环等。这个其实比较符合单线程里面的思维：程序前面对某个变量的修改一定是对后续操作可见的。</p>
+<h3 id="规则二-管程锁定规则-monitor-lock-rule">规则二 管程锁定规则 （Monitor Lock Rule）</h3>
+<p>对一个锁的解锁操作Happens-Before后面对同一个锁的加锁操作。这里注意，是<strong>同一个</strong>锁，而<strong>后面</strong>指的是时间上的先后顺序。</p>
+<p>管程是一种通用的同步原语，在 Java 中指的就是 synchronized。管程中的锁在 Java 里是隐式实现的，在进入同步块之前，会自动加锁，而在代码块执行完会自动释放锁，加锁以及释放锁都是编译器帮我们实现的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> x = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123; <span class="comment">//加锁</span></span><br><span class="line">     <span class="keyword">if</span> (<span class="keyword">this</span>.x &lt; <span class="number">12</span>) &#123;</span><br><span class="line">         <span class="keyword">this</span>.x = <span class="number">12</span>;</span><br><span class="line">     &#125; </span><br><span class="line">&#125; <span class="comment">//解锁</span></span><br></pre></td></tr></table></figure>
+<p>假设线程 A 执行完代码块后 x 的值会变成 12 ，线程 B 进入代码块时，能够看到线程 A 对 x 的写操作，也就是线程 B 能够看到 x==12。</p>
+<h3 id="规则三-传递性-transitivity">规则三 传递性 （Transitivity）</h3>
+<p>如果 A Happens-Before B，且 B Happens-Before C，那么 A Happens-Before C。</p>
+<h3 id="规则四-volatile变量规则-volatile-variable-rule">规则四 volatile变量规则 （Volatile Variable Rule）</h3>
+<p>这条规则是指对一个 volatile 变量的写操作， Happens-Before 于后续对这个 volatile 变量的读操作。</p>
+<p>好了，到了这个规则我们就可以解决开头的那个问题了。</p>
+<ul>
+<li>通过规则一，【a = 42】 Happens-Before 写变量 【b = true】</li>
+<li>通过规则四，写变量【b = true】 Happens-Before 读变量 【b == true】</li>
+<li>最后通过规则三，【a = 42】 Happens-Before 读变量【b == true】，于是，如果线程 B 读到了【b = true】，那么线程 A 设置的【a = 42】对线程 B 是可见的。也就是说，线程 B 能看到 【a = 42】</li>
+</ul>
+<p>怎么样，有没有一种恍然大明白的感觉。</p>
+<h3 id="规则五-线程启动规则-thread-start-rule">规则五 线程启动规则 （Thread Start Rule）</h3>
+<p>Thread对象的 start() 方法 Happens-Before 此线程的每一个动作。</p>
+<p>这个是关于线程启动的，比如说，在主线程中启动一个子线程 A ，那么子线程 A 能观察到启动子线程 A 前主线程的操作。</p>
+<p>换句话说就是，如果线程 A 调用线程 B 的 start() 方法（即在线程 A 中启动线程 B），那么该 start() 操作 Happens-Before 于线程 B 中的任意操作。</p>
+<h3 id="规则六-线程终止规则-thread-termination-rule">规则六 线程终止规则 （Thread Termination Rule）</h3>
+<p>线程中的所有操作都 Happens-Before 对此线程的终止检测。如通过 Thread::join() 方法判断线程是否结束，Thread::isAlive()来检测线程是否终止等。</p>
+<p>这个是关于线等待的，如果在线程 A 中，调用线程 B 的 join() 并成功返回，那么线程 B 中的任意操作 Happens-Before 于该 join() 操作的返回。</p>
+<h3 id="规则七-线程中断规则-thread-interruption-rule">规则七 线程中断规则 （Thread Interruption Rule）</h3>
+<p>对线程的interrupt()方法的调用 Happens-Before 被中断线程的代码检测到的中断事件的发生，如通过Thread::interrupted()来检测是否有中断发生。</p>
+<p>这个跟规则六大同小异，可以直接类比。</p>
+<h3 id="规则八-对象终结规则-finalizer-rule">规则八 对象终结规则 （Finalizer Rule）</h3>
+<p>一个对象的初始化完成（构造器执行结束）Happens-Before 它的finalize()方法的开始。</p>
+<p>这个规则，emmmm... 就不解释了吧。</p>
+<p>Happens-Before 的语义是一种因果关系。在现实世界里，如果 A 事件是导致 B 事件的起因，那么 A 事件一定是先于（Happens-Before）B 事件发生的，在 Java 语言里面，Happens-Before 的语义本质上是一种可见性，A Happens-Before B 意味着 A 事件对 B 事件来说是可见的，无论 A 事件和 B 事件是否发生在同一个线程里。例如 A 事件发生在线程 1 上，B 事件发生在线程 2 上，Happens-Before 规则保证线程 2 上也能看到 A 事件的发生。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2020/08/22/post/" rel="next" title="面试造火箭之多线程（上）">
+                  <i class="fa fa-chevron-left"></i> 面试造火箭之多线程（上）
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2020/09/20/post/" rel="prev" title="手撕Java虚拟机 （一）">
+                  手撕Java虚拟机 （一） <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+    
+    <div class="comments" id="comments"></div>
+  
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#可见性问题"><span class="nav-number">1.</span> <span class="nav-text">可见性问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#原子性问题"><span class="nav-number">2.</span> <span class="nav-text">原子性问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#指令重排序带来的有序性问题"><span class="nav-number">3.</span> <span class="nav-text">指令重排序带来的有序性问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#volatile-登场"><span class="nav-number">4.</span> <span class="nav-text">volatile 登场</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#happens-before-规则"><span class="nav-number">5.</span> <span class="nav-text">Happens-Before 规则</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#规则一-程序次序规则-program-order-rule"><span class="nav-number">5.1.</span> <span class="nav-text">规则一 程序次序规则 （Program Order Rule）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#规则二-管程锁定规则-monitor-lock-rule"><span class="nav-number">5.2.</span> <span class="nav-text">规则二 管程锁定规则 （Monitor Lock Rule）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#规则三-传递性-transitivity"><span class="nav-number">5.3.</span> <span class="nav-text">规则三 传递性 （Transitivity）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#规则四-volatile变量规则-volatile-variable-rule"><span class="nav-number">5.4.</span> <span class="nav-text">规则四 volatile变量规则 （Volatile Variable Rule）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#规则五-线程启动规则-thread-start-rule"><span class="nav-number">5.5.</span> <span class="nav-text">规则五 线程启动规则 （Thread Start Rule）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#规则六-线程终止规则-thread-termination-rule"><span class="nav-number">5.6.</span> <span class="nav-text">规则六 线程终止规则 （Thread Termination Rule）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#规则七-线程中断规则-thread-interruption-rule"><span class="nav-number">5.7.</span> <span class="nav-text">规则七 线程中断规则 （Thread Interruption Rule）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#规则八-对象终结规则-finalizer-rule"><span class="nav-number">5.8.</span> <span class="nav-text">规则八 对象终结规则 （Finalizer Rule）</span></a></li></ol></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image"
+      src="/images/avatar.jpg"
+      alt="Funcas">
+  <p class="site-author-name" itemprop="name">Funcas</p>
+  <div class="site-description" itemprop="description">随缘更新，读书笔记、杂记、感想...</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories">
+          
+        
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/funcas" title="GitHub &rarr; https://github.com/funcas" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://weibo.com/funcasion" title="Weibo &rarr; https://weibo.com/funcasion" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Funcas</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">48k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">44 分钟</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//cdn.bootcss.com/animejs/3.1.0/anime.min.js"></script>
+  <script src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1/dist/Valine.min.js', () => {
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick';
+  guest = guest.split(',').filter(item => {
+    return GUEST.includes(item);
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'brfXUyPtevWzNxHVFTd1Ig5i-9Nh9j0Va',
+    appKey: 'LfGhuxD7dxTdWLukqWDBHmYc',
+    placeholder: '评论区',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false,
+    lang: 'zh-cn' || 'zh-cn',
+    path: location.pathname
+  });
+}, window.Valine);
+</script>
+
+</body>
+</html>

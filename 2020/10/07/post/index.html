@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="//cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":true},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="在那个C/C++横行的年代里，Java推出的一大卖点就是：自动内存管理。虚拟机自动帮你分配和回收对象，彻底将开发者在手工管理内存的繁重工作中解放出来。当然，最后被一直诟病的也是它，因为是自动档了，灵活性和高效性肯定有所散失，像以前手动档时可以“排水道过弯”的这种骚操作是没办法使用了，并且还带来了不少与垃圾回收的新的问题。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="手撕Java虚拟机（二）">
+<meta property="og:url" content="https://funcas.top/2020/10/07/post/index.html">
+<meta property="og:site_name" content="草堂笔记">
+<meta property="og:description" content="在那个C/C++横行的年代里，Java推出的一大卖点就是：自动内存管理。虚拟机自动帮你分配和回收对象，彻底将开发者在手工管理内存的繁重工作中解放出来。当然，最后被一直诟病的也是它，因为是自动档了，灵活性和高效性肯定有所散失，像以前手动档时可以“排水道过弯”的这种骚操作是没办法使用了，并且还带来了不少与垃圾回收的新的问题。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/bd25aee5-6c8d-4603-9ef6-5c28d38fd16a.jpeg">
+<meta property="og:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/ref.png">
+<meta property="og:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/mark-sweep.png">
+<meta property="og:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/copy.png">
+<meta property="og:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/compact.png">
+<meta property="og:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/gen.png">
+<meta property="og:updated_time" content="2021-08-08T11:49:45.646Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="手撕Java虚拟机（二）">
+<meta name="twitter:description" content="在那个C/C++横行的年代里，Java推出的一大卖点就是：自动内存管理。虚拟机自动帮你分配和回收对象，彻底将开发者在手工管理内存的繁重工作中解放出来。当然，最后被一直诟病的也是它，因为是自动档了，灵活性和高效性肯定有所散失，像以前手动档时可以“排水道过弯”的这种骚操作是没办法使用了，并且还带来了不少与垃圾回收的新的问题。">
+<meta name="twitter:image" content="https://funcas.top/2020/10/07/post/media/16020381515851/bd25aee5-6c8d-4603-9ef6-5c28d38fd16a.jpeg">
+  <link rel="canonical" href="https://funcas.top/2020/10/07/post/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>手撕Java虚拟机（二） | 草堂笔记</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c530a536ce02e21013b5b5170e12af3a";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+  <meta name="google-site-verification" content="yJU64JNdiWS_XdeDFFw_aSDOBzJwFVweNrT8PRfbU4Y" />
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">草堂笔记</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://funcas.top/2020/10/07/post/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Funcas">
+      <meta itemprop="description" content="随缘更新，读书笔记、杂记、感想...">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="草堂笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">手撕Java虚拟机（二）
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2020-10-07 17:20:10" itemprop="dateCreated datePublished" datetime="2020-10-07T17:20:10+08:00">2020-10-07</time>
+            </span>
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/10/07/post/#comments" itemprop="discussionUrl"><span class="post-comments-count valine-comment-count" data-xid="/2020/10/07/post/" itemprop="commentCount"></span></a>
+  </span>
+  
+  
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">本文字数：</span>
+              
+              <span>5.6k</span>
+            </span>
+          
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              
+              <span>5 分钟</span>
+            </span>
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="/2020/10/07/post/media/16020381515851/bd25aee5-6c8d-4603-9ef6-5c28d38fd16a.jpeg"></p><p>在那个C/C++横行的年代里，Java推出的一大卖点就是：自动内存管理。虚拟机自动帮你分配和回收对象，彻底将开发者在手工管理内存的繁重工作中解放出来。当然，最后被一直诟病的也是它，因为是自动档了，灵活性和高效性肯定有所散失，像以前手动档时可以“排水道过弯”的这种骚操作是没办法使用了，并且还带来了不少与垃圾回收的新的问题。</p><a id="more"></a>
+
+<h2 id="x01-从垃圾说起">0x01 从垃圾说起</h2>
+<p>“堆” 在JVM规范里是一种通用性的内存池，用于存放所有的Java对像。（讲人话，就是你在代码上使用了new关键字创建一个对象，那么这个对象就存在于堆当中）堆是一个运行时数据区，类的对象从中分配空间，它们不需要程序代码中进行显式释放。释放的这个工作，是由垃圾回收器负责的。堆上分配的好处就是你可以动态地分配内存大小，比如我们在C里面定义一个数组，需要定义数组的大小：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> arr[<span class="number">3</span>] = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br></pre></td></tr></table></figure>
+<p>到了Java，我们可以这么写</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span>[] arr = <span class="keyword">new</span> <span class="keyword">int</span>[<span class="number">10</span>];</span><br></pre></td></tr></table></figure>
+<p>这就让我们可以在运行时动态来分配数组空间，所以按照JVM规范来讲，Java中的对象和数组都存放在堆中。 接下来，我们再引入一个额外的话题，假如让C也能实现Java这种动态分配的能力，可行吗？答案是肯定的（C蔑视一笑: 还——有——谁——），下面我们就用C来简单模拟下数组动态分配的过程：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> n = <span class="number">10</span>;</span><br><span class="line">    <span class="keyword">int</span> *pArr = (<span class="keyword">int</span> *)<span class="built_in">malloc</span>(n * <span class="keyword">sizeof</span>(<span class="keyword">int</span>));</span><br><span class="line">    pArr[<span class="number">2</span>] = <span class="number">4</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"%d\n"</span>, *(pArr+<span class="number">2</span>));</span><br><span class="line">    <span class="built_in">free</span>(pArr);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们来看看，在手动内存管理的时代，要实现Java这一行代码，需要做多少事情。先得用malloc关键字来手工开辟一块内存空间，代码中的 n 就是数组空间的大小，最后在用完了的时候，还得手工加上free()关键字，对我们手工开辟的这块区域做显示内存回收。而这一切，其实就是<code>int[] arr = new int[10]</code>这个操作的整个过程，只是free()是由JVM来帮你执行了。感受一下Java这种里程碑式的发展理念。</p>
+<p>堆上分配带来的好处是，虚拟机不需要知道要从堆内分配多少存储区域，也不需要知道存储的数据在堆内需要存活多久。因此，堆上分配相对于栈上分配来说，灵活性更大，程序只有到了运行时，才会自动在堆内进行存储分配。但是，代价也是有，就是堆上分配效率不如栈上的好。一个最直观的场景，堆空间的线程共享的，所以在分配空间的时候，必然会存在多线程竞争同一块存储空间的情况，这时候就不得不进行线程同步。当然，JVM为了解决这个问题，引入了TLAB(Thread Local Allocation Buffer)，为每个线程划分一块线程私有缓冲区，简单讲，相当于分配的时候圈一块大一点的地盘，圈完就是线程私有了，当这个线程需要再分配空间时，优先从缓冲区中分配，不够分就再圈地。然而，这种操作也只能是降低冲突概率。</p>
+<p>所以Java对象的创建和回收，对系统的开销还是比较可观的。这也是后来Java被诟病性能不好的其中一个原因，Java不支持运行时栈上分配对象，没有像C/C++里面的struct结构。栈上面只保存了对象的指针（引用），当对象不再被使用后，需要依靠GC来遍历引用树并进行回收，如果内存空间较大、对象数量较多，就会给GC带来巨大压力，也就间接影响了应用性能。于是，再后来，JVM使用了栈上分配、逃逸分析等优化手段，目的就是降低堆空间的使用、降低GC的回收频率。所以，现在的Java堆区不再是对象分配的唯一选择了。</p>
+<h2 id="x02-垃圾收集算法">0x02 垃圾收集算法</h2>
+<h3 id="引用计数法和根搜索算法">引用计数法和根搜索算法</h3>
+<p>在Java的语境下，垃圾的定义就是指已经死亡的对象却还持有的内存空间。自动内存管理，管理的正是部分东西，将死亡对象占有的内存空间回收再利用。那么问题来了，要如何判断这个对象是否已经死亡。</p>
+<p><strong>引用计数法</strong></p>
+<p>早期的Objective-C， python都是用的这种算法。顾名思义，它的做法是为每个对象添加一个引用计数器，用来统计指向该对象的引用个数。一旦某个对象的引用计数器为 0，则说明该对象已经死亡，便可以被回收了。 引用计数器的实现很简单，对于一个对象A，只要有任何一个对象引用了A，则A的引用计数器+1， 当引用失效或换成其它值以后，A的引用计数器-1。当A的对象引用计数器清0的时候，则对象A被回收，也就不可能再被使用了。也就是说，只要为对象配置一个整型的引用计数器即可以实现这个功能。所以引用计数器的好处是简单、且不需要等到内存不足的时候再进行垃圾回收，当对象引用计数为0的时候，即可立即回收。</p>
+<p>但是，引用计数器有个比较严重的问题：循环引用。A对象引用着B，同时B对象也引用着A， 那么这时候引用计数器就无能为力了，现实的例子就是一个环状链表，当头指针失去了对环状链表的引用时，这个环状链表将无法被回收。因为引用没有减少。所以python也提供了手工GC的能力给开发者调用。 如下图，构造了一个环状链表，当头指针的引用被赋值为Null时，可以发现，整个环状链表的引用计数都不为0，因此也无法被回收。</p>
+<p><img src="/2020/10/07/post/media/16020381515851/ref.png"></p>
+<p><strong>根搜索算法</strong></p>
+<p>目前HotSpot和大部分的JVM都是使用根搜索算法作为垃圾标记算法。简单来说，根搜索算法是以GC Roots（根对象集合）为起点，按照从上至下的方式搜索 GC Roots 所连接的目标对象是否可达（所以也叫可达性分析），如果目标对象不可达，就说明该对象已经死亡。在根搜索算法中，只有能够被 GC Roots直接或间接地连接的对象才是存活对象。</p>
+<p>那么什么是 GC Roots 呢？我们可以理解为由堆外指向堆内的引用，一般而言，GC Roots 包括（但不限于）如下几种：</p>
+<ul>
+<li>Java 方法栈桢中的局部变量；</li>
+<li>已加载类的静态变量；</li>
+<li>JNI handles；</li>
+<li>已启动且未停止的 Java 线程。</li>
+</ul>
+<h3 id="垃圾回收的方式">垃圾回收的方式</h3>
+<p>当成功标记出内存中的存活对象和死亡对象后，GC接下来的任务就是进行垃圾回收，释放掉死亡对象所占用的内存空间。目前在JVM中比较常见的三种垃圾收集算法是：标记-清除算法、复制算法、标记-压缩算法。</p>
+<h4 id="标记-清除算法mark-sweep">标记-清除算法（Mark-Sweep)</h4>
+<p>标记-清除是一种非常基础和常见的垃圾收集算法。 先普及下算法涉及的几个概念：mutator和collector。collector是指垃圾收集器，而mutator就是除垃圾收集器以外的部分，比如我们的应用。简单讲就是,mutator负责开辟内存、读写内存，而collector负责回收不再使用的内存区域，以供mutator得以再开辟新的内存空间。</p>
+<p>标记-清除算法分为两个阶段，标记和清除阶段（废话 -_-|| ）。</p>
+<p>在标记阶段，collector从mutator的根对象开始遍历，对从mutator根对象可以访问到的对象都打上一个标记，（一般在对象头上有个专用的标志位）将其标记为可达对象。</p>
+<p>在清除阶段，collector对堆内存空间进行线性遍历，如果发现某个对象头上的信息是未被标记的对象，那么将其回收。</p>
+<p>标记-清除这种回收方式的原理及其简单，但是有两个缺点。一是会造成内存碎片。由于 Java 虚拟机的堆中对象必须是连续分布的，因此可能出现总空闲内存足够，但是无法分配的极端情况。 另一个则是分配效率较低。如果是一块连续的内存空间，那么我们可以通过指针加法（pointer bumping）来做分配。而对于空闲列表，Java 虚拟机则需要逐个访问列表中的项，来查找能够放入新建对象的空闲内存。</p>
+<p><img src="/2020/10/07/post/media/16020381515851/mark-sweep.png"></p>
+<h4 id="复制算法copying">复制算法（Copying）</h4>
+<p>复制算法首先将内存空间划分为两块，每次只使用其中的一块，在垃圾回收时将正在使用的内存中的存活对象复制到未被使用的内存块中，之后清除正在使用的内存块中的所有对象，交换两个内存的角色，完成垃圾回收。 <img src="/2020/10/07/post/media/16020381515851/copy.png"></p>
+<p>如果系统中的垃圾对象很多，复制算法需要复制的存活对象数量并不会太大。因此在真正需要垃圾回收的时候，复制算法的效率很高。又由于对象在垃圾回收的过程中被复制到新的内存空间中，所以也不存在内存碎片的问题。该算法的缺点是，内存使用率只有50%。</p>
+<p>Java的年轻代串行垃圾回收器中正是使用了复制算法的思想，年轻代分为Eden、From、To三个部分，其中From、To可视为复制算法中两块大小相同的内存空间，且可以进行角色互换的空间块。由于Java年轻代正常情况下容纳的都是“朝生夕死”的对象，所以每次回收时垃圾对象往往是比较多的，特别适合使用复制算法。</p>
+<h4 id="标记-压缩算法mark-compact">标记-压缩算法（Mark-Compact）</h4>
+<p>由于标记-清除算法执行效率低下，且执行完还会产生内存碎片。所以JVM设计者在此基础之上进行了改进。标记-压缩算法由此诞生。</p>
+<p>当成功标记出内存中的垃圾对象后，标记-压缩算法会将所有的存活对象都移动到一个规整且连续的内存空间中，当成功执行压缩之后，已用和未用的内存都各自一边，彼此之间维系着一个记录下一次分配起始点的标记指针。当为新对象分配内存时，则可以使用指针加法（bump the pointer）技术修改指针的偏移量将新对象分配在第一个空闲的内存位置上。 <img src="/2020/10/07/post/media/16020381515851/compact.png"></p>
+<h4 id="小结">小结</h4>
+<p>三种算法的对比：</p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th>Mark-Sweep</th>
+<th>Copying</th>
+<th>Mark-Compact</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>速度</td>
+<td>中</td>
+<td>快</td>
+<td>慢</td>
+</tr>
+<tr class="even">
+<td>空间开销</td>
+<td>少（有碎片）</td>
+<td>只有一半的利用率（无碎片）</td>
+<td>少（无碎片）</td>
+</tr>
+<tr class="odd">
+<td>移动对象</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+</tr>
+</tbody>
+</table>
+<h2 id="x03-garbage-collection">0x03 Garbage Collection</h2>
+<h3 id="分代思想">分代思想</h3>
+<p>经过大量的实践和研究，JVM的研究人员发现，绝大部分的 Java 对象只存活一小段时间，而存活下来的小部分 Java 对象则会存活很长一段时间。于是造就了Java虚拟机的分代思想。就是将堆空间划分为两代，分别叫做新生代和老年代。新生代用来存储新建的对象。当对象存活时间够长时，则将其移动到老年代。于是，Java 虚拟机可以给不同代使用不同的回收算法。对于新生代，大部分的 Java 对象只存活一小段时间，那么便可以频繁地采用耗时较短的垃圾回收算法，让大部分的垃圾都能够在新生代被回收掉；对于老年代，对象有大概率会继续存活，当真正触发针对老年代的回收时，堆的空间可能真的已经耗尽了。这时候，Java 虚拟机往往需要做一次全堆扫描，耗时也将不计成本。</p>
+<h3 id="jvm-堆的划分">JVM 堆的划分</h3>
+<p>Java虚拟机将堆划分为新生代和老年代。其中新生代又划分为Eden、和两个大小相同的Survivor区。 <img src="/2020/10/07/post/media/16020381515851/gen.png"></p>
+<p>当我们调用 new 指令时，如果无法进行栈上分配，那么它会在 Eden 区中划出一块作为存储对象的内存。由于堆空间是线程共享的，因此直接在这里边划空间是需要进行同步的。前面讲过，这时JVM采用的是TLAB技术来优化这个过程。具体来说，每个线程可以向 JVM 申请一段连续的内存，比如2k，作为线程私有的 TLAB。这个操作需要加锁，线程需要维护两个指针，一个指向 TLAB 中空余内存的起始位置，一个则指向 TLAB 末尾。接下来的 new 指令，便可以直接通过指针加法来实现，即把指向空余内存位置的指针加上所请求的字节数。如果加法后空余内存指针的值仍小于或等于指向末尾的指针，则代表分配成功。否则，TLAB 已经没有足够的空间来满足本次新建操作。这个时候，便需要当前线程重新申请新的 TLAB。</p>
+<p>当Eden区空间用尽时，会触发Minor GC，来收集新生代的垃圾，存活下来的对象进入Survivor区。 当发生Minor GC时，Eden区和from指向的Survivor区中的存活对象会被复制到to指向的Survivor区当中，然后交换from和to的指针，为下一次Minor GC做条件准备。 Java对象在Survivor区中每熬过一次复制，年龄就会被+1，JVM会记录对象年龄（一般在对象头中），如果对象的年龄超过一定的域值（默认是15，可以通过虚拟机参数-XX:+MaxTenuringThreshold调整），那么对象将被晋升到老年代中去。另外，大对象（指需要大量连续空间的内存对象）直接进入老年代。这样做的目的是避免Eden区和Survivor两个区之间发生大量的内存拷贝；如果是单个Survivor区已经被占用了超过50%，那么较高复制次数的对象也会被晋升到老年代。</p>
+<p>于是，当发生 Minor GC 时，我们使用了复制算法，将 Survivor 区中的老存活对象晋升到老年代，然后将剩下的存活对象和 Eden 区的存活对象复制到另一个 Survivor 区中。理想情况下，Eden 区中的对象基本都死亡了，那么需要复制的数据将非常少，因此采用复制算法的效果优秀。</p>
+<p>Minor GC 的目的是不用对整个堆进行垃圾回收。但是，有这么一种场景，那就是老年代的对象可能引用新生代的对象。也就是说，在标记存活对象的时候，我们需要扫描老年代中的对象。于是这个Minor GC就要对老年代也扫一遍吗？（Minor GC: 我不干净了）</p>
+<p>HotSpot给出的解决方案是，引入了一种叫卡表的技术。将整个堆划分为一个个大小为 512 字节的卡，并且维护一个卡表，用来存储每张卡的一个标识位。这个标识位代表对应的卡是否可能存有指向新生代对象的引用。如果可能存在，那么我们就认为这张卡是脏的。</p>
+<p>在进行 Minor GC 的时候，我们便可以不用扫描整个老年代，而是在卡表中寻找脏卡，并将脏卡中的对象加入到 Minor GC 的 GC Roots 里。当完成所有脏卡的扫描之后，Java 虚拟机便会将所有脏卡的标识位清零。</p>
+<p>如果想要保证每个可能有指向新生代对象引用的卡都被标记为脏卡，那么 Java 虚拟机需要截获每个引用型实例变量的写操作，并作出对应的写标识位操作。这个时候需要引入写屏障，当然，写屏障并不会判断更新后的引用是否指向新生代中的对象，而是统统当成可能指向新生代对象的引用。虽然写屏障带来了一些开销，但是总体上它可以加大Minor GC的吞吐率，总体上来看，是划算的。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2020/09/20/post/" rel="next" title="手撕Java虚拟机 （一）">
+                  <i class="fa fa-chevron-left"></i> 手撕Java虚拟机 （一）
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+    
+    <div class="comments" id="comments"></div>
+  
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#x01-从垃圾说起"><span class="nav-number">1.</span> <span class="nav-text">0x01 从垃圾说起</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#x02-垃圾收集算法"><span class="nav-number">2.</span> <span class="nav-text">0x02 垃圾收集算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#引用计数法和根搜索算法"><span class="nav-number">2.1.</span> <span class="nav-text">引用计数法和根搜索算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#垃圾回收的方式"><span class="nav-number">2.2.</span> <span class="nav-text">垃圾回收的方式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#标记-清除算法mark-sweep"><span class="nav-number">2.2.1.</span> <span class="nav-text">标记-清除算法（Mark-Sweep)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#复制算法copying"><span class="nav-number">2.2.2.</span> <span class="nav-text">复制算法（Copying）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#标记-压缩算法mark-compact"><span class="nav-number">2.2.3.</span> <span class="nav-text">标记-压缩算法（Mark-Compact）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#小结"><span class="nav-number">2.2.4.</span> <span class="nav-text">小结</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#x03-garbage-collection"><span class="nav-number">3.</span> <span class="nav-text">0x03 Garbage Collection</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#分代思想"><span class="nav-number">3.1.</span> <span class="nav-text">分代思想</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#jvm-堆的划分"><span class="nav-number">3.2.</span> <span class="nav-text">JVM 堆的划分</span></a></li></ol></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image"
+      src="/images/avatar.jpg"
+      alt="Funcas">
+  <p class="site-author-name" itemprop="name">Funcas</p>
+  <div class="site-description" itemprop="description">随缘更新，读书笔记、杂记、感想...</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories">
+          
+        
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/funcas" title="GitHub &rarr; https://github.com/funcas" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://weibo.com/funcasion" title="Weibo &rarr; https://weibo.com/funcasion" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Funcas</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">48k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">44 分钟</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//cdn.bootcss.com/animejs/3.1.0/anime.min.js"></script>
+  <script src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1/dist/Valine.min.js', () => {
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick';
+  guest = guest.split(',').filter(item => {
+    return GUEST.includes(item);
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'brfXUyPtevWzNxHVFTd1Ig5i-9Nh9j0Va',
+    appKey: 'LfGhuxD7dxTdWLukqWDBHmYc',
+    placeholder: '评论区',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false,
+    lang: 'zh-cn' || 'zh-cn',
+    path: location.pathname
+  });
+}, window.Valine);
+</script>
+
+</body>
+</html>

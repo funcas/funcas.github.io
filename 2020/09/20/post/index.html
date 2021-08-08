@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="//cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":true},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="说起“手撕Java虚拟机”，之前陆陆续续见过好多软文、出版物的书名都是这个，然后翻看一下，发现基本都是标题党，无非把Jvm规范翻译一遍，还有更过份的就直接抄袭《深入理解Java虚拟机》这本书的内容了。所以看起来，这个年代手撕的门槛也忒低了点，那么跟个风，也“手撕”一波。0x00 起源当年在大学学C语言的时候，老师说他们当年写程序的时候，不像现在这么幸福。他们写程序是在卡片或纸带上打孔，1打洞，0不">
+<meta property="og:type" content="article">
+<meta property="og:title" content="手撕Java虚拟机 （一）">
+<meta property="og:url" content="https://funcas.top/2020/09/20/post/index.html">
+<meta property="og:site_name" content="草堂笔记">
+<meta property="og:description" content="说起“手撕Java虚拟机”，之前陆陆续续见过好多软文、出版物的书名都是这个，然后翻看一下，发现基本都是标题党，无非把Jvm规范翻译一遍，还有更过份的就直接抄袭《深入理解Java虚拟机》这本书的内容了。所以看起来，这个年代手撕的门槛也忒低了点，那么跟个风，也“手撕”一波。0x00 起源当年在大学学C语言的时候，老师说他们当年写程序的时候，不像现在这么幸福。他们写程序是在卡片或纸带上打孔，1打洞，0不">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://funcas.top/2020/09/20/post/media/16005692661410/16005924683678.jpg">
+<meta property="og:image" content="https://funcas.top/2020/09/20/post/media/16005692661410/16005784341093.jpg">
+<meta property="og:image" content="https://funcas.top/2020/09/20/post/media/16005692661410/16005796063470.jpg">
+<meta property="og:image" content="https://funcas.top/2020/09/20/post/media/16005692661410/16005803676980.jpg">
+<meta property="og:image" content="https://funcas.top/2020/09/20/post/media/16005692661410/16005831855783.jpg">
+<meta property="og:updated_time" content="2021-08-08T11:46:01.411Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="手撕Java虚拟机 （一）">
+<meta name="twitter:description" content="说起“手撕Java虚拟机”，之前陆陆续续见过好多软文、出版物的书名都是这个，然后翻看一下，发现基本都是标题党，无非把Jvm规范翻译一遍，还有更过份的就直接抄袭《深入理解Java虚拟机》这本书的内容了。所以看起来，这个年代手撕的门槛也忒低了点，那么跟个风，也“手撕”一波。0x00 起源当年在大学学C语言的时候，老师说他们当年写程序的时候，不像现在这么幸福。他们写程序是在卡片或纸带上打孔，1打洞，0不">
+<meta name="twitter:image" content="https://funcas.top/2020/09/20/post/media/16005692661410/16005924683678.jpg">
+  <link rel="canonical" href="https://funcas.top/2020/09/20/post/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>手撕Java虚拟机 （一） | 草堂笔记</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c530a536ce02e21013b5b5170e12af3a";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+  <meta name="google-site-verification" content="yJU64JNdiWS_XdeDFFw_aSDOBzJwFVweNrT8PRfbU4Y" />
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">草堂笔记</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="https://funcas.top/2020/09/20/post/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Funcas">
+      <meta itemprop="description" content="随缘更新，读书笔记、杂记、感想...">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="草堂笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">手撕Java虚拟机 （一）
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2020-09-20 17:07:38" itemprop="dateCreated datePublished" datetime="2020-09-20T17:07:38+08:00">2020-09-20</time>
+            </span>
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/09/20/post/#comments" itemprop="discussionUrl"><span class="post-comments-count valine-comment-count" data-xid="/2020/09/20/post/" itemprop="commentCount"></span></a>
+  </span>
+  
+  
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">本文字数：</span>
+              
+              <span>4.6k</span>
+            </span>
+          
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              
+              <span>4 分钟</span>
+            </span>
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="/2020/09/20/post/media/16005692661410/16005924683678.jpg"></p><p>说起“手撕Java虚拟机”，之前陆陆续续见过好多软文、出版物的书名都是这个，然后翻看一下，发现基本都是标题党，无非把Jvm规范翻译一遍，还有更过份的就直接抄袭《深入理解Java虚拟机》这本书的内容了。所以看起来，这个年代手撕的门槛也忒低了点，那么跟个风，也“手撕”一波。</p><h2 id="x00-起源">0x00 起源</h2><p>当年在大学学C语言的时候，老师说他们当年写程序的时候，不像现在这么幸福。他们写程序是在卡片或纸带上打孔，1打洞，0不打洞。然后将打好洞的纸带输入计算机，计算机就读取这上面的二进制代码进行计算。大概工作过程就像这种<a href="https://b23.tv/9In2Uz" target="_blank" rel="noopener">纸带八音盒</a>。</p><a id="more"></a>
+
+
+
+<p>所以，当年的程序员用于编程的原材料就是纸带，剪刀、胶水（debug用)，IDE就是打孔器（猜过去应该像火车剪票器那样的东西吧）。没有代码提示，没有自动完成，需要在脑海中构建出CPU的执行过程，也就是说你是在写机器码，因为CPU只认0和1，理解不了编程语言，哪怕是汇编。</p>
+<p>在这种条件下撸代码，可以说门槛是相当高了，不仅要脑力好，眼力也要好。随随便便的小功能，可能就要几千个洞。如果一个不小心，洞打错了，就要从头一行一行看，在无数的1和0里边找bug！所以那会程序员估计真不能996，不然光纸带可能就能把公司写破产。</p>
+<p>由于这种工作方式实在太反人类了，并且生产力过于低下，于是人们开始考虑能不能用一些助记符（单词，或人类能懂的字符）来描述程序。于是汇编就出现，Grace Hopper开发了一套叫A-0 system，可以自动地将助记符翻译成机器码。汇编之比于机器码，就好比我们现在看Java之比于汇编。</p>
+<p>再后来的事情，大家都知道了，汇编生B，B生C，C生万物。一时间各种编程语言“百家争鸣”。 <img src="/2020/09/20/post/media/16005692661410/16005784341093.jpg"> 这是一段C语言的目标文件构成， 中间是机器码，右边是汇编代码</p>
+<p>而与此同时，硬件平台、操作系统也悄悄地“百花齐放”。于是，为了兼容不同平台，代码不得不对不同的平台进行判断、编码兼容性代码，然后在对应的平台上重新编译。于是人们又开始思考，如何屏蔽这些系统的差异性，以实现：write once, run anywhere！这个人就是Java之父——詹姆斯•高斯林。</p>
+<p>第一代的Java运行机制大概是这样的，定义一个中间语言（现在的字节码文件），将开发者编写的代码先编译转换成中间语言指令描述。再开发一套运行中间语言指令的虚拟机，负责将中间语言指令翻译成不同平台上差异部分的API调用。我们知道，run anywhere可以通过编译器帮我们实现，只要使用不同平台上的编译器编译即可run anywhere（linux很多软件的安装方式就是下载源代码直接编译的）。而中间语言的出现，使得write once得以实现，开发者无须关注底层硬件平台的差异进行针对性编码，平台差异性，由虚机机帮我们搞定。这就是第一代的Java。在当时，这种思路确实是想想都带感。可是由于中间多了一层转换，大约是将中间代码再翻译成C语言的模板，然后由虚机机来执行。所以在执行中间代码的时候，几乎是属于解释执行，执行效率确实是差强人意。</p>
+<p>既然将中间代码翻译成C语言的模板这种方式太慢，干脆激进一点，我们定义好中间语言的指令集（这玩意有200多个指令），然后把这些操作直接翻译成机器码，即01代码。所以这个时候只要突破C到机器码这个边界，就可以达到这个目的。</p>
+<p>不负众望，C语言运行机器码利器——函数指针。函数指针本质上也是一种指针，（注意和指针函数不要混了）这种指针里存的不是变量的内存地址，而是某个函数的内存首地址。所以这其实是一种曲线救国的方式，通过函数指针指向事先定义好的机器码定义的函数首地址，然后再间接进行调用。下面举个例子演示下这种神奇的功能：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="comment">// 这是一段定义计算两数和的机器码</span></span><br><span class="line"><span class="keyword">const</span> <span class="keyword">unsigned</span> <span class="keyword">char</span> code[] = <span class="string">"\x55\x48\x89\xe5\x89\x7d\xfc\x89\x75\xf8\x8b\x45\xfc\x03\x45\xf8\x5d\xc3"</span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> a = <span class="number">5</span>;</span><br><span class="line">    <span class="keyword">int</span> b = <span class="number">3</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> (*fun)(<span class="keyword">int</span>, <span class="keyword">int</span>);</span><br><span class="line">    fun = (<span class="keyword">void</span>*)code;</span><br><span class="line">    <span class="keyword">int</span> r = fun(a, b);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"result = %d\n"</span>, r);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译运行看下结果： <img src="/2020/09/20/post/media/16005692661410/16005796063470.jpg"></p>
+<p>惊不惊喜，意不意外，那串16进制字符串居然有对两数做加和运行的能力。 至此，难点突破了，我们可以定义好中间代码层的那200多个中间指令，做成机器码模板，这时候，运行中间指令的这个程序就是虚拟机，而中间指令文件就是字节码。至此，我们就能实现一个简单的Java虚拟机了。其实hotspot虚拟机的实现要远比这个复杂得多，有兴趣的可以去看看openjdk的源码，位置在share/runtime的目录下，主要是javaCalls.cpp。这里就不再过多展开。 <img src="/2020/09/20/post/media/16005692661410/16005803676980.jpg"></p>
+<h2 id="x01-java虚拟机的内存模型">0x01 Java虚拟机的内存模型</h2>
+<h3 id="jvm是如何执行字节码的">JVM是如何执行字节码的</h3>
+<p>在了解了大致的JVM实现方式以后，我们来研究下Java虚拟机具体是如何执行Java字节码的。</p>
+<p>首先Java源代码经过一系统词法分析、语法分析、句法分析编译成字节码文件。Java虚拟机通过类装载子系统将字节码文件加载进来，加载后的Java类会被存放在方法区当中。在实际运行过程中，虚拟机会执行方法区内的代码。</p>
+<p><img src="/2020/09/20/post/media/16005692661410/16005831855783.jpg"></p>
+<p>当我们使用汇编或C语言的时候，我们通常只关注段式内存管理，也就是只关注堆和栈这两种内存模型即可。但是在Java虚机机内部，要更加的细化。Java虚拟机将栈细分为面向Java的Java方法栈和面向本地方法（native)的本地方法栈，以及用于存放线程执行位置的程序计数器。由于JVM自己定义了一套指令体系，所以当多个线程调度的时候，需要有个地方记录当前线程运行到指令的哪个位置，程序计数器就是用来做这个事情的。</p>
+<p>在运行过程中，每调用一个Java方法，JVM会在当前线程的Java方法栈中生成一个栈帧，用以存放局部变量、操作数栈、动态连接、方法出口等信息。当当前方法执行完毕时，不管是正常返回还是异常结束，JVM会弹出当前线程的栈帧，并销毁。这也就解释了为什么局部变量是不会引发线程安全问题。</p>
+<p>再往下，JVM解析出来的字节码指令，是JVM自己的规范，在硬件层面是无法被理解和运行的。所以JVM需要将解析到的字节码指令，翻译成对应的机器码。在hotspot里面，这种翻译有两种形式： * 解释执行，就是将字节码一条一条地翻译成机器码并执行。 * 即时编译（JIT)，将一个方法中包含的所有字节码翻译成机器码并执行</p>
+<p>在hotspot里面，一般是混合模式，即先解释执行字节码，然后统计反复执行的热点代码，时机成熟以后，即时编译会介入，将热点代码进行即时编译，以提高运行速度。hotspot内置了多个即时编译器：C1, C2,Graal。 * C1主要面向对于启动性能有要求的程序，如GUI程序，采用的优化手段相对简单，编译时间也较短。 * C2是面向对性能有要求的服务端程序，优化手段较复杂，编译时间相对长，但生成的代码执行效率比较高。 * Graal是实验性的，暂时不展开讨论。 从Java7以后，hotspot默认采用分层编译的方式，热点方法先会被C1编译，然后热点中的热点又会被C2再进一步编译。</p>
+<h3 id="运行时数据区">运行时数据区</h3>
+<p>上图中，灰色框内的部分叫做JVM的运行时数据区，也是JVM管理的内存区域。主要有以下这几个部分：</p>
+<h4 id="程序计数器">程序计数器</h4>
+<p>这是一块较小的内存空间，它是线程私有的，可以看做是当前线程执行字节码的行号指示器，JVM在解释字节码的时候，就是通过改变这个计数器的值来选取下一条待执行指令，通这它就可以完成诸如分支、循环、跳转、异常处理、线程恢复等基础功能。跟CPU里的PC寄存器，其实是一个道理。<strong>此内存区域是唯一一个在《Java虚拟机规范》中没有规定任何OOM情况的区域。</strong></p>
+<h4 id="java虚拟机栈">Java虚拟机栈</h4>
+<p>Java虚拟机栈，也是线程私有的，它的生命周期与当前线程相同，每当方法被执行的时候，JVM都会同步创建一个栈帧，用于存放局部变量表、操作数栈、动态连接、返回地址等信息。当方法执行完毕，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。</p>
+<p>其中，<strong>局部变量表</strong>存放了编译期各种已知的基本数据类型、对象引用（指向对象的指针）和returnAddress类型（指向一条字节码指令地址）。</p>
+<p><strong>操作数栈</strong>也是一个栈数据结构，是用于辅助对局部变量表内容进行赋值和各种算术运算时作辅助计算。比如：整数加法的字节码指令iadd在运行的时候操作数栈中最接近栈顶的两个元素已经存入了两个int型的数值,当执行这个指令时,会将这两个int值出栈并相加,然后将相加的结果入栈。</p>
+<p><strong>动态连接</strong>是一个指向运行时常量池中该栈帧所属方法的引用，持有这个引用是为了支持方法调用过程中的动态连接。</p>
+<p><strong>方法返回地址</strong>用于记录方法调用前的位置，以在方法执行结束后，恢复上层调用栈中的状态</p>
+<p>在这个内存区域中，如果线程请求的栈深度大于虚拟机所允许的深度，将会抛出StackOverflowError异常；如果Java虚拟机栈容量允许动态扩展，当栈扩展时无法申请到足够的内存空间时，抛出OutOfMemoryError异常。</p>
+<h4 id="本地方法栈">本地方法栈</h4>
+<p>与Java虚拟机栈类似，区别只是该区域为虚拟机使用到的本地方法服务。Java内部有不少API使用了native方式。</p>
+<h4 id="java堆">Java堆</h4>
+<p>对于Java应用来说，Java堆是虚拟机所管理的内存中最大的一块区域。Java堆是被所有线程所共享的，该区域的唯一目的就是用于存放对象实例。在Java的世界里，几乎所有的对象实例都分配在堆上。在《Java虚拟机规范》中对Java堆的描述是：<strong>所有对象实例以及数组都应该在堆上分配。</strong>当然，这里仅仅是从规范的角度来讲，其实随着Java语言的发展，由于即时编译器的进步，逃逸分析技术越来越强大，栈上分配、标题替换等优化手段，使得这种说法并不是那么“绝对”。后面我们讲到对象内存分配的时候会针对性地介绍。</p>
+<p>Java堆也是垃圾收集器管理的主要内存区域，所以采用不同的垃圾回收策略，会对堆内存做不同的“格式化”操作。体现在分代垃圾回收策略和不分代垃圾回收策略下，内存管理方式不同。这块在后面垃圾回收会着重介绍这一块内容。 如果在Java堆中没有足够的空间完成实例分配，且堆也无法再扩展时，Java虚拟机将会抛出OutOfMemoryError异常。</p>
+<h4 id="方法区">方法区</h4>
+<p>方法区与Java堆一样，是各个线程共享的区域，它用于存储已被虚拟机加载的类型信息、常量、静态变量、即时编译后的代码缓存等数据。它还有一种说法叫“非堆”（Non-Heap)，用于与Java堆区分开来。 如果方法区无法满足新内存分配的需求时，将抛出OutOfMemoryErro异常。</p>
+<h2 id="x2-总结">0x2 总结</h2>
+<p>虚拟机的出现，可以说是里程碑式的，代码在虚拟机中执行，使得移植成本大大降低，一量Java被编译为字节码，便可以在不同平台上的Java虚机上运行。此外，利益于Java虚机机的自动内存管理，使我们从冗长而繁琐的人工内存管理（malloc/free)中解放出来。</p>
+<p>Java虚拟机将内存区域划分成五个部分，分别为：方法区、堆、程序计数器、Java方法栈和本地方法栈。Java程序编译成字节码文件，需要先加载至方法区中，之后才能在虚拟机中运行。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2020/09/06/post/" rel="next" title="面试造火箭之多线程（下）">
+                  <i class="fa fa-chevron-left"></i> 面试造火箭之多线程（下）
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2020/10/07/post/" rel="prev" title="手撕Java虚拟机（二）">
+                  手撕Java虚拟机（二） <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+    
+    <div class="comments" id="comments"></div>
+  
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#x00-起源"><span class="nav-number">1.</span> <span class="nav-text">0x00 起源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#x01-java虚拟机的内存模型"><span class="nav-number">2.</span> <span class="nav-text">0x01 Java虚拟机的内存模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#jvm是如何执行字节码的"><span class="nav-number">2.1.</span> <span class="nav-text">JVM是如何执行字节码的</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#运行时数据区"><span class="nav-number">2.2.</span> <span class="nav-text">运行时数据区</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#程序计数器"><span class="nav-number">2.2.1.</span> <span class="nav-text">程序计数器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#java虚拟机栈"><span class="nav-number">2.2.2.</span> <span class="nav-text">Java虚拟机栈</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#本地方法栈"><span class="nav-number">2.2.3.</span> <span class="nav-text">本地方法栈</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#java堆"><span class="nav-number">2.2.4.</span> <span class="nav-text">Java堆</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#方法区"><span class="nav-number">2.2.5.</span> <span class="nav-text">方法区</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#x2-总结"><span class="nav-number">3.</span> <span class="nav-text">0x2 总结</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image"
+      src="/images/avatar.jpg"
+      alt="Funcas">
+  <p class="site-author-name" itemprop="name">Funcas</p>
+  <div class="site-description" itemprop="description">随缘更新，读书笔记、杂记、感想...</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories">
+          
+        
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/funcas" title="GitHub &rarr; https://github.com/funcas" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://weibo.com/funcasion" title="Weibo &rarr; https://weibo.com/funcasion" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+    
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Funcas</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">48k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">44 分钟</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="//cdn.bootcss.com/animejs/3.1.0/anime.min.js"></script>
+  <script src="//cdn.bootcss.com/velocity/1.2.1/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1/dist/Valine.min.js', () => {
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick';
+  guest = guest.split(',').filter(item => {
+    return GUEST.includes(item);
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'brfXUyPtevWzNxHVFTd1Ig5i-9Nh9j0Va',
+    appKey: 'LfGhuxD7dxTdWLukqWDBHmYc',
+    placeholder: '评论区',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false,
+    lang: 'zh-cn' || 'zh-cn',
+    path: location.pathname
+  });
+}, window.Valine);
+</script>
+
+</body>
+</html>
